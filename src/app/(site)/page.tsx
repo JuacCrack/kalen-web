@@ -2,9 +2,9 @@ import Home from "@/components/Home";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "NextCommerce | Nextjs E-commerce template",
-  description: "This is Home for NextCommerce Template",
-  // other metadata
+  title: "Kalen Indumentaria | Moda femenina",
+  description:
+    "Descubrí las últimas colecciones de Kalen Indumentaria. Moda femenina, ediciones exclusivas y envíos a todo el país.",
 };
 
 export default function HomePage() {

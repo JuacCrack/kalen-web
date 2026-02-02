@@ -34,6 +34,11 @@
 
 /* third-party libraries CSS */
 
+:root{
+  --brand-primary:#fe62b2;
+  --brand-secondary:#ffaed7;
+}
+
 /* clears the ‘X’ from Internet Explorer */
 input[type='search']::-ms-clear {
   display: none;

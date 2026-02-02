@@ -25,7 +25,9 @@ const config: Config = {
       current: "currentColor",
       transparent: "transparent",
       white: "#FFFFFF",
+
       body: "#6C6F93",
+
       meta: {
         DEFAULT: "#F7F9FC",
         2: "#495270",
@@ -33,13 +35,15 @@ const config: Config = {
         4: "#8D93A5",
         5: "#BBBEC9",
       },
+
       dark: {
-        DEFAULT: "#1C274C",
+        DEFAULT: "#fe62b2",
         2: "#495270",
         3: "#606882",
         4: "#8D93A5",
         5: "#BBBEC9",
       },
+
       gray: {
         DEFAULT: "#F3F5F6",
         1: "#F9FAFB",
@@ -50,8 +54,9 @@ const config: Config = {
         6: "#6B7280",
         7: "#374151",
       },
+
       blue: {
-        DEFAULT: "#3C50E0",
+        DEFAULT: "#fe62b2",
         dark: "#1C3FB7",
         light: "#5475E5",
         "light-2": "#8099EC",
@@ -59,6 +64,7 @@ const config: Config = {
         "light-4": "#C3CEF6",
         "light-5": "#E1E8FF",
       },
+
       red: {
         DEFAULT: "#F23030",
         dark: "#E10E0E",
@@ -69,6 +75,7 @@ const config: Config = {
         "light-5": "#FEEBEB",
         "light-6": "#FEF3F3",
       },
+
       green: {
         DEFAULT: "#22AD5C",
         dark: "#1A8245",
@@ -79,6 +86,7 @@ const config: Config = {
         "light-5": "#C2F3D6",
         "light-6": "#DAF8E6",
       },
+
       yellow: {
         DEFAULT: "#FBBF24",
         dark: "#F59E0B",
@@ -88,13 +96,35 @@ const config: Config = {
         "light-2": "#FEF3C7",
         "light-4": "#FFFBEB",
       },
+
       teal: {
         DEFAULT: "#02AAA4",
         dark: "#06A09B",
       },
+
       orange: {
         DEFAULT: "#F27430",
         dark: "#E1580E",
+      },
+
+      brand: {
+        primary: "#FF7EB6",
+        soft: "#FFD6E8",
+      },
+
+      surface: {
+        DEFAULT: "#FFFFFF",
+        muted: "#FAFAFA",
+      },
+
+      text: {
+        primary: "#1A1A1A",
+        muted: "#7A7A7A",
+      },
+
+      cta: {
+        DEFAULT: "#000000",
+        hover: "#1A1A1A",
       },
     },
     screens: {
