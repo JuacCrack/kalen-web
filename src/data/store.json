@@ -1,291 +1,360 @@
-{
-  "global": {
-    "brandName": "Kalen.",
-    "colors": {
-      "primary": "#fe62b2",
-      "secondary": "#ffaed7"
+[
+  {
+    "component": "global",
+    "key": "global",
+    "order": 0,
+    "data": {
+      "brandName": "Kalen.",
+      "colors": { "primary": "#fe62b2", "secondary": "#ffaed7" },
+      "store": {
+        "minimumPurchase": 50000,
+        "support": {
+          "kicker": "atención 24/7",
+          "value": "+54 11 6465 2075",
+          "icon": "bi-headset"
+        },
+        "contact": {
+          "hours": "Lun a Vie 8:00 a 16:30 · Sáb 8:00 a 13:30",
+          "whatsapp": {
+            "value": "+54 11 6465 2075",
+            "href": "https://wa.me/5491164652075"
+          },
+          "email": {
+            "value": "info@kalenindumentaria.com.ar",
+            "href": "mailto:info@kalenindumentaria.com.ar"
+          },
+          "address": "Campana 481, CABA"
+        },
+        "socials": {
+          "instagram": "https://instagram.com/kalenindumentaria",
+          "tiktok": "https://www.tiktok.com/@kalenindumentaria"
+        },
+        "routes": {
+          "shop": "/shop-with-sidebar",
+          "categoryQueryKey": "cat"
+        }
+      }
     }
   },
-  "footer": {
-    "brandHref": "/",
-    "description": "Indumentaria femenina · Drops seleccionados · Atención por WhatsApp y email.",
-    "contact": [
-      {
-        "icon": "bi-clock",
-        "text": "Lun a Vie 8:00 a 16:30 · Sáb 8:00 a 13:30"
-      },
-      {
-        "icon": "bi-whatsapp",
-        "text": "+54 11 6465 2075",
-        "href": "https://wa.me/5491164652075",
-        "target": "_blank",
-        "rel": "noreferrer"
-      },
-      {
-        "icon": "bi-envelope",
-        "text": "info@kalenindumentaria.com.ar",
-        "href": "mailto:info@kalenindumentaria.com.ar"
-      },
-      {
-        "icon": "bi-geo-alt",
-        "text": "Campana 481, CABA"
-      }
-    ],
-    "socials": [
-      {
-        "label": "Instagram",
-        "href": "https://instagram.com/kalenindumentaria",
-        "icon": "bi-instagram",
-        "target": "_blank",
-        "rel": "noreferrer"
-      },
-      {
-        "label": "TikTok",
-        "href": "https://www.tiktok.com/@kalenindumentaria",
-        "icon": "bi-tiktok",
-        "target": "_blank",
-        "rel": "noreferrer"
-      }
-    ],
-    "trust": {
-      "title": "Comprá con confianza",
+  {
+    "component": "categories",
+    "key": "categories",
+    "order": 0,
+    "data": {
       "items": [
         {
-          "icon": "bi-shield-lock",
-          "text": "Pagos seguros."
+          "id": "verano",
+          "title": "Verano",
+          "label": "Verano",
+          "slug": "verano"
         },
         {
-          "icon": "bi-truck",
-          "text": "Envíos a todo el país."
-        },
+          "id": "fiesta",
+          "title": "Fiesta",
+          "label": "Fiesta",
+          "slug": "fiesta"
+        }
+      ]
+    }
+  },
+  {
+    "component": "header",
+    "key": "header",
+    "order": 0,
+    "data": {
+      "logo": {
+        "href": "/",
+        "src": "/images/logo/logo.svg",
+        "alt": "Logo",
+        "width": 100,
+        "height": 50,
+        "className": "w-[110px] h-auto lg:w-[110px]"
+      },
+      "menu": [
+        { "title": "Inicio", "path": "/" },
+        { "title": "Tienda", "path": "{{global.store.routes.shop}}" },
         {
-          "icon": "bi-chat-dots",
-          "text": "Soporte por WhatsApp."
+          "title": "Categorías",
+          "submenuSource": "{{categories.items}}",
+          "submenuConfig": {
+            "labelKey": "label",
+            "valueKey": "slug",
+            "pathTemplate": "{{global.store.routes.shop}}?{{global.store.routes.categoryQueryKey}}={value}"
+          }
         }
       ],
-      "badges": ["ARS", "Envíos", "Soporte"]
-    },
-    "bottom": {
-      "copyright": "© {year} Kalen. Todos los derechos reservados.",
-      "highlights": [
+      "search": {
+        "placeholder": "Estoy buscando...",
+        "ariaOpen": "Abrir búsqueda",
+        "ariaClose": "Cerrar búsqueda",
+        "ariaSubmit": "Buscar",
+        "categoriesSource": "{{categories.items}}",
+        "categoriesConfig": {
+          "includeAll": true,
+          "allLabel": "Todas las categorías",
+          "allValue": "all",
+          "labelKey": "label",
+          "valueKey": "slug"
+        }
+      },
+      "links": {
+        "account": {
+          "href": "/signin",
+          "kicker": "cuenta",
+          "label": "Ingresar",
+          "icon": "bi-person"
+        },
+        "wishlist": {
+          "href": "/wishlist",
+          "ariaLabel": "Lista de deseos",
+          "icon": "bi-heart"
+        }
+      },
+      "actions": {
+        "recent": {
+          "href": "#",
+          "ariaLabel": "Vistos recientemente",
+          "icon": "bi-clock-history"
+        }
+      },
+      "support": {
+        "kicker": "{{global.store.support.kicker}}",
+        "value": "{{global.store.support.value}}",
+        "icon": "{{global.store.support.icon}}"
+      },
+      "ui": { "stickyShadow": true, "colors": "{{global.colors}}" }
+    }
+  },
+  {
+    "component": "hero",
+    "key": "hero",
+    "order": 0,
+    "data": {
+      "sectionBg": "#E5EAF4",
+      "left": {
+        "bgShapesImage": {
+          "src": "/images/hero/hero-bg.png",
+          "alt": "hero bg shapes",
+          "width": 534,
+          "height": 520
+        }
+      },
+      "rightCards": [
         {
-          "icon": "bi-heart",
-          "text": "Hecho en Argentina"
+          "productId": 1,
+          "badgeLeft": "NEW",
+          "badgeRight": "Edición\nVerano-Playa",
+          "cta": { "label": "Ver producto" }
+        },
+        {
+          "productId": 2,
+          "badgeLeft": "PARTY",
+          "badgeRight": "Edition\n<3",
+          "cta": { "label": "Ver producto" }
+        }
+      ]
+    }
+  },
+  {
+    "component": "heroSlider",
+    "key": "heroSlider",
+    "order": 0,
+    "data": {
+      "swiper": {
+        "spaceBetween": 30,
+        "centeredSlides": true,
+        "autoplay": { "delay": 2500, "disableOnInteraction": false },
+        "pagination": { "clickable": true }
+      },
+      "slides": [
+        {
+          "productId": 3,
+          "badgeLeft": "30%",
+          "badgeRight": "Liquidación\nOFF",
+          "cta": { "label": "Comprar ahora" }
+        },
+        {
+          "productId": 1,
+          "badgeLeft": "NEW",
+          "badgeRight": "Edición\nVerano-Playa",
+          "cta": { "label": "Ver producto" }
+        }
+      ]
+    }
+  },
+  {
+    "component": "heroFeature",
+    "key": "heroFeature",
+    "order": 0,
+    "data": {
+      "items": [
+        {
+          "icon": "bi-truck",
+          "title": "Envíos",
+          "description": "Envíos a toda la Argentina"
+        },
+        {
+          "icon": "bi-arrow-repeat",
+          "title": "Cambios y devoluciones",
+          "description": "No aplican cambios ni devoluciones"
+        },
+        {
+          "icon": "bi-shield-check",
+          "title": "Pagos 100% seguros",
+          "description": "Garantía de pago seguro"
         },
         {
           "icon": "bi-bag-check",
-          "text": "Compra simple"
+          "title": "Compra mínima",
+          "description": "La compra mínima es de ${{global.store.minimumPurchase}}"
         }
       ]
     }
   },
-  "products": {
-    "items": [
-      {
-        "id": 1,
-        "title": "Havit HV-G69 USB Gamepad",
-        "reviews": 15,
-        "price": 59,
-        "discountedPrice": 29,
-        "imgs": {
-          "thumbnails": [
-            "/images/products/product-1-sm-1.png",
-            "/images/products/product-1-sm-2.png"
-          ],
-          "previews": [
-            "/images/products/product-1-bg-1.png",
-            "/images/products/product-1-bg-2.png"
-          ]
-        }
+  {
+    "component": "home",
+    "key": "home.newArrivals",
+    "order": 0,
+    "data": {
+      "newArrivals": {
+        "kicker": "FERIA ONLINE KLN <3",
+        "title": "¡Hasta 80% OFF en toda la tienda!",
+        "viewAll": {
+          "label": "Ver todo",
+          "href": "{{global.store.routes.shop}}"
+        },
+        "productIds": [1, 2, 3]
       }
-    ]
-  },
-  "home": {
-    "newArrivals": {
-      "kicker": "This Week’s",
-      "title": "New Arrivals",
-      "viewAll": {
-        "label": "View All",
-        "href": "/shop-with-sidebar"
-      },
-      "productIds": [1]
     }
   },
-  "heroSlider": {
-    "swiper": {
-      "spaceBetween": 30,
-      "centeredSlides": true,
-      "autoplay": { "delay": 2500, "disableOnInteraction": false },
-      "pagination": { "clickable": true }
-    },
-    "slides": [
-      {
-        "badgeLeft": "30%",
-        "badgeRight": "Liquidación\nOFF",
-        "title": "Short Sequinn",
-        "description": "LIQUIDACION!! EDICION FIESTA \n30% OFF Tela \nMicrotul con Lentejuelas.",
-        "cta": {
-          "label": "Comprar ahora",
-          "href": "https://www.kalenindumentaria.com.ar/productos/short-sequinn-54ysc/"
+  {
+    "component": "products",
+    "key": "products",
+    "order": 0,
+    "data": {
+      "items": [
+        {
+          "id": 1,
+          "title": "Capa Cleo",
+          "categoryId": "verano",
+          "href": "https://www.kalenindumentaria.com.ar/productos/capa-cleo/",
+          "currency": "ARS",
+          "price": 13000,
+          "badges": ["NEW", "Verano-Playa"],
+          "shortDescription": "Edición Verano-Playa <3 · Envío gratis",
+          "imgs": {
+            "previews": [
+              "https://acdn-us.mitiendanube.com/stores/001/023/731/products/44-a8c1f736905872c78a17679585059745-1024-1024.webp"
+            ]
+          },
+          "image": {
+            "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/44-a8c1f736905872c78a17679585059745-1024-1024.webp",
+            "alt": "Capa Cleo",
+            "width": 351,
+            "height": 358
+          }
         },
-        "image": {
-          "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/40-39b62c023d231d19b317679586638683-1024-1024.webp",
-          "alt": "Short Sequinn",
-          "width": 351,
-          "height": 358
-        }
-      },
-      {
-        "badgeLeft": "NEW",
-        "badgeRight": "Edición\nVerano-Playa",
-        "title": "Capa Cleo",
-        "description": "NEW!! EDICION VERANO-PLAYA <3 · ARS $13.000 · Envío gratis",
-        "cta": {
-          "label": "Ver producto",
-          "href": "https://www.kalenindumentaria.com.ar/productos/capa-cleo/"
+        {
+          "id": 2,
+          "title": "Mini Short Amapola",
+          "categoryId": "fiesta",
+          "href": "https://www.kalenindumentaria.com.ar/productos/mini-short-amapola/",
+          "currency": "ARS",
+          "price": 24000,
+          "badges": ["PARTY"],
+          "shortDescription": "Envío gratis · Tela: Encaje abhudabi",
+          "imgs": {
+            "previews": [
+              "https://acdn-us.mitiendanube.com/stores/001/023/731/products/img_2037-4daa48c44c7bdfff6c17686500980145-1024-1024.webp"
+            ]
+          },
+          "image": {
+            "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/img_2037-4daa48c44c7bdfff6c17686500980145-1024-1024.webp",
+            "alt": "Mini Short Amapola",
+            "width": 260,
+            "height": 320
+          }
         },
-        "image": {
-          "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/44-a8c1f736905872c78a17679585059745-1024-1024.webp",
-          "alt": "Capa Cleo",
-          "width": 351,
-          "height": 358
+        {
+          "id": 3,
+          "title": "Short Sequinn",
+          "categoryId": "fiesta",
+          "href": "https://www.kalenindumentaria.com.ar/productos/short-sequinn-54ysc/",
+          "currency": "ARS",
+          "price": 0,
+          "discountPercent": 30,
+          "badges": ["LIQUIDACIÓN", "30% OFF"],
+          "shortDescription": "Edición Fiesta · Microtul con lentejuelas",
+          "imgs": {
+            "previews": [
+              "https://acdn-us.mitiendanube.com/stores/001/023/731/products/40-39b62c023d231d19b317679586638683-1024-1024.webp"
+            ]
+          },
+          "image": {
+            "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/40-39b62c023d231d19b317679586638683-1024-1024.webp",
+            "alt": "Short Sequinn",
+            "width": 351,
+            "height": 358
+          }
         }
-      }
-    ]
-  },
-  "heroFeature": {
-    "items": [
-      {
-        "icon": "bi-truck",
-        "title": "Envíos",
-        "description": "Envios a toda la argentina"
-      },
-      {
-        "icon": "bi-arrow-repeat",
-        "title": "Cambios y devoluciones",
-        "description": "No aplican cambios ni devoluciones"
-      },
-      {
-        "icon": "bi-shield-check",
-        "title": "Pagos 100% seguros",
-        "description": "Garantía de pago seguro"
-      },
-      {
-        "icon": "bi-bag-check",
-        "title": "Compra minima",
-        "description": "La compra minima es de $50000"
-      }
-    ]
-  },
-  "hero": {
-    "sectionBg": "#E5EAF4",
-    "left": {
-      "bgShapesImage": {
-        "src": "/images/hero/hero-bg.png",
-        "alt": "hero bg shapes",
-        "width": 534,
-        "height": 520
-      }
-    },
-    "rightCards": [
-      {
-        "badgeLeft": "NEW",
-        "badgeRight": "Edición\nVerano-Playa",
-        "title": "Capa Cleo",
-        "description": "NEW!! EDICION VERANO-PLAYA <3 · ARS $13.000 · Envío gratis",
-        "cta": {
-          "label": "Ver producto",
-          "href": "https://www.kalenindumentaria.com.ar/productos/capa-cleo/"
-        },
-        "image": {
-          "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/44-a8c1f736905872c78a17679585059745-1024-1024.webp",
-          "alt": "Capa Cleo",
-          "width": 260,
-          "height": 320
-        }
-      },
-      {
-        "badgeLeft": "PARTY",
-        "badgeRight": "Edition\n<3",
-        "title": "Mini Short Amapola",
-        "description": "Envío gratis · Tela: Encaje abhudabi · ARS $24.000",
-        "cta": {
-          "label": "Ver producto",
-          "href": "https://www.kalenindumentaria.com.ar/productos/mini-short-amapola/"
-        },
-        "image": {
-          "src": "https://acdn-us.mitiendanube.com/stores/001/023/731/products/img_2037-4daa48c44c7bdfff6c17686500980145-1024-1024.webp",
-          "alt": "Mini Short Amapola",
-          "width": 260,
-          "height": 320
-        }
-      }
-    ]
-  },
-  "header": {
-    "links": {
-      "account": {
-        "href": "/signin",
-        "kicker": "cuenta",
-        "label": "Ingresar",
-        "icon": "bi-person"
-      },
-      "wishlist": {
-        "href": "/wishlist",
-        "ariaLabel": "Lista de deseos",
-        "icon": "bi-heart"
-      }
-    },
-    "logo": {
-      "href": "/",
-      "src": "/images/logo/logo.svg",
-      "alt": "Logo",
-      "width": 100,
-      "height": 50,
-      "className": "w-[110px] h-auto lg:w-[110px]"
-    },
-    "support": {
-      "kicker": "atención 24/7",
-      "value": "(+965) 7492-3477",
-      "icon": "bi-headset"
-    },
-    "actions": {
-      "recent": {
-        "href": "#",
-        "ariaLabel": "Vistos recientemente",
-        "icon": "bi-clock-history"
-      }
-    },
-    "search": {
-      "placeholder": "Estoy buscando...",
-      "ariaOpen": "Abrir búsqueda",
-      "ariaClose": "Cerrar búsqueda",
-      "ariaSubmit": "Buscar",
-      "categories": [
-        { "label": "All Categories", "value": "0" },
-        { "label": "Desktop", "value": "1" },
-        { "label": "Laptop", "value": "2" },
-        { "label": "Monitor", "value": "3" },
-        { "label": "Phone", "value": "4" },
-        { "label": "Watch", "value": "5" },
-        { "label": "Mouse", "value": "6" },
-        { "label": "Tablet", "value": "7" }
       ]
-    },
-    "menu": [
-      { "title": "Inicio", "path": "/" },
-      { "title": "Tienda", "path": "/shop-with-sidebar" },
-      {
-        "title": "Categorías",
-        "submenu": [
-          { "title": "Verano", "path": "/shop-with-sidebar?cat=verano" },
-          { "title": "Fiesta", "path": "/shop-with-sidebar?cat=fiesta" }
+    }
+  },
+  {
+    "component": "footer",
+    "key": "footer",
+    "order": 0,
+    "data": {
+      "brandHref": "/",
+      "description": "Indumentaria femenina · Drops seleccionados · Atención por WhatsApp y email.",
+      "contact": [
+        { "icon": "bi-clock", "text": "{{global.store.contact.hours}}" },
+        {
+          "icon": "bi-whatsapp",
+          "text": "{{global.store.contact.whatsapp.value}}",
+          "href": "{{global.store.contact.whatsapp.href}}",
+          "target": "_blank",
+          "rel": "noreferrer"
+        },
+        {
+          "icon": "bi-envelope",
+          "text": "{{global.store.contact.email.value}}",
+          "href": "{{global.store.contact.email.href}}"
+        },
+        { "icon": "bi-geo-alt", "text": "{{global.store.contact.address}}" }
+      ],
+      "socials": [
+        {
+          "label": "Instagram",
+          "href": "{{global.store.socials.instagram}}",
+          "icon": "bi-instagram",
+          "target": "_blank",
+          "rel": "noreferrer"
+        },
+        {
+          "label": "TikTok",
+          "href": "{{global.store.socials.tiktok}}",
+          "icon": "bi-tiktok",
+          "target": "_blank",
+          "rel": "noreferrer"
+        }
+      ],
+      "trust": {
+        "title": "Comprá con confianza",
+        "badges": ["ARS", "Envíos", "Soporte"],
+        "items": [
+          { "icon": "bi-shield-lock", "text": "Pagos seguros." },
+          { "icon": "bi-truck", "text": "Envíos a todo el país." },
+          { "icon": "bi-chat-dots", "text": "Soporte por WhatsApp." }
+        ]
+      },
+      "bottom": {
+        "copyright": "© {year} Kalen. Todos los derechos reservados.",
+        "highlights": [
+          { "icon": "bi-heart", "text": "Hecho en Argentina" },
+          { "icon": "bi-bag-check", "text": "Compra simple" }
         ]
       }
-    ],
-    "ui": {
-      "stickyShadow": true,
-      "colors": { "primary": "#fe62b2", "secondary": "#ffaed7" }
     }
   }
-}
+]

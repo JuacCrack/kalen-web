@@ -1,58 +1,102 @@
 import React from "react";
 import Link from "next/link";
 import ProductItem from "@/components/Common/ProductItem";
-import { getHomeNewArrivals, getProducts, resolveProductsByIds } from "@/data/store";
+import {
+  getHomeNewArrivals,
+  getProducts,
+  resolveProductsByIds,
+} from "@/data/store";
 
 const NewArrival = () => {
   const cfg = getHomeNewArrivals();
   const { items } = getProducts();
   const products = resolveProductsByIds(cfg.productIds, items);
 
+  const kicker = (cfg.kicker ?? "").trim() || "Novedades";
+  const title = (cfg.title ?? "").trim() || "Productos destacados";
+  const viewAllHref = cfg.viewAll?.href || "/shop-with-sidebar";
+  const viewAllLabel = (cfg.viewAll?.label ?? "").trim() || "Ver todo";
+
   return (
-    <section className="overflow-hidden pt-15">
-      <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-        <div className="mb-7 flex items-center justify-between">
-          <div>
-            <span className="flex items-center gap-2.5 font-medium text-dark mb-1.5">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M3.11826 15.4622C4.11794 16.6668 5.97853 16.6668 9.69971 16.6668H10.3007C14.0219 16.6668 15.8825 16.6668 16.8821 15.4622M3.11826 15.4622C2.11857 14.2577 2.46146 12.429 3.14723 8.77153C3.63491 6.17055 3.87875 4.87006 4.8045 4.10175M3.11826 15.4622C3.11826 15.4622 3.11826 15.4622 3.11826 15.4622ZM16.8821 15.4622C17.8818 14.2577 17.5389 12.429 16.8532 8.77153C16.3655 6.17055 16.1216 4.87006 15.1959 4.10175M16.8821 15.4622C16.8821 15.4622 16.8821 15.4622 16.8821 15.4622ZM15.1959 4.10175C14.2701 3.33345 12.947 3.33345 10.3007 3.33345H9.69971C7.0534 3.33345 5.73025 3.33345 4.8045 4.10175M15.1959 4.10175C15.1959 4.10175 15.1959 4.10175 15.1959 4.10175ZM4.8045 4.10175C4.8045 4.10175 4.8045 4.10175 4.8045 4.10175Z"
-                  stroke="#3C50E0"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M7.64258 6.66678C7.98578 7.63778 8.91181 8.33345 10.0003 8.33345C11.0888 8.33345 12.0149 7.63778 12.3581 6.66678"
-                  stroke="#3C50E0"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {cfg.kicker}
+    <section className="relative overflow-hidden py-10 sm:py-14 lg:py-18">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-28 -left-28 h-64 w-64 sm:h-80 sm:w-80 rounded-full blur-3xl opacity-40 bg-[#fe62b2]" />
+        <div className="absolute -bottom-28 -right-28 h-64 w-64 sm:h-80 sm:w-80 rounded-full blur-3xl opacity-35 bg-[#ffaed7]" />
+        <div className="absolute inset-0 bg-white" />
+      </div>
+
+      <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-0">
+        <div className="mb-7 sm:mb-9 flex flex-col gap-4 sm:gap-5 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/85 px-3 py-1 text-xs sm:text-sm font-semibold text-slate-900 shadow-sm backdrop-blur">
+              <i
+                className="bi bi-stars text-[15px] sm:text-[16px] leading-none text-[#fe62b2]"
+                aria-hidden="true"
+              />
+              <span className="leading-none">{kicker}</span>
             </span>
-            <h2 className="font-semibold text-xl xl:text-heading-5 text-dark">
-              {cfg.title}
+
+            <h2 className="mt-3 text-balance font-semibold text-[22px] leading-tight sm:text-3xl lg:text-[34px] text-slate-900">
+              {title}
             </h2>
+
+            <div className="mt-3 h-1 w-20 sm:w-24 rounded-full bg-gradient-to-r from-[#fe62b2] to-[#ffaed7]" />
           </div>
 
-          <Link
-            href={cfg.viewAll.href}
-            className="inline-flex font-medium text-custom-sm py-2.5 px-7 rounded-md border-gray-3 border bg-gray-1 text-dark ease-out duration-200 hover:bg-dark hover:text-white hover:border-transparent"
-          >
-            {cfg.viewAll.label}
-          </Link>
+          <div className="flex items-start md:justify-end pt-[2px]">
+            <Link
+              href={viewAllHref}
+              className="inline-flex w-full xs:w-auto items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md active:scale-[0.99] bg-[#fe62b2]"
+            >
+              <i className="bi bi-bag" aria-hidden="true" />
+              {viewAllLabel}
+            </Link>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-7.5 gap-y-9">
-          {products.map((item) => (
-            <ProductItem item={item as any} key={(item as any).id} />
-          ))}
-        </div>
+        {products.length ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 sm:gap-x-6 lg:gap-x-7.5 gap-y-5 sm:gap-y-8 lg:gap-y-9">
+            {products.map((item) => (
+              <div key={(item as any).id} className="h-full">
+                <ProductItem item={item as any} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-black/5 bg-white/85 p-6 sm:p-8 text-center shadow-sm backdrop-blur">
+            <div className="mx-auto mb-3 inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[#ffaed7]/40 text-slate-900">
+              <i
+                className="bi bi-bag-x text-[20px] sm:text-[22px] leading-none"
+                aria-hidden="true"
+              />
+            </div>
+
+            <p className="text-base sm:text-lg font-semibold text-slate-900">
+              Todavía no hay productos para mostrar.
+            </p>
+            <p className="mt-1 text-sm sm:text-base text-slate-600">
+              Volvé en unos minutos o explorá la tienda completa.
+            </p>
+
+            <div className="mt-5 flex flex-col xs:flex-row gap-3 justify-center">
+              <Link
+                href={viewAllHref}
+                className="inline-flex w-full xs:w-auto items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md active:scale-[0.99] bg-[#fe62b2]"
+              >
+                <i className="bi bi-shop" aria-hidden="true" />
+                Ir a la tienda
+              </Link>
+
+              <Link
+                href="/"
+                className="inline-flex w-full xs:w-auto items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-black hover:text-white"
+              >
+                <i className="bi bi-house" aria-hidden="true" />
+                Volver al inicio
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -82,14 +82,14 @@ const CartSidebarModal = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <Link
+              {/* <Link
                 onClick={() => closeCartModal()}
                 href="/cart"
                 className="w-full inline-flex items-center justify-center gap-2 font-medium text-white bg-pink-500 py-[13px] px-6 rounded-md ease-out duration-200 hover:bg-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-200"
               >
                 <i className="bi bi-bag"></i>
                 Ver carrito
-              </Link>
+              </Link> */}
 
               <Link
                 href="/checkout"
