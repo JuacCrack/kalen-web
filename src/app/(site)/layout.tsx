@@ -1,59 +1,33 @@
-"use client";
-import { useState, useEffect } from "react";
-import "../css/euclid-circular-a-font.css";
-import "../css/style.css";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
+import ClientShell from "./ClientShell";
+import { fetchStoreRows } from "@/lib/storeApi";
+import {
+  setStoreRows,
+  getGlobal,
+  getFooter,
+  getHeader,
+  getHero,  
+  getHeroSlider,
+  getHeroFeature,
+  getProducts,
+  getCategories,
+  getHomeNewArrivals,
+} from "@/data/store";
 
-import { ModalProvider } from "../context/QuickViewModalContext";
-import { CartModalProvider } from "../context/CartSidebarModalContext";
-import { ReduxProvider } from "@/redux/provider";
-import QuickViewModal from "@/components/Common/QuickViewModal";
-import CartSidebarModal from "@/components/Common/CartSidebarModal";
-import { PreviewSliderProvider } from "../context/PreviewSliderContext";
-import PreviewSliderModal from "@/components/Common/PreviewSlider";
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const rows = await fetchStoreRows();
+  setStoreRows(rows);
 
-import ScrollToTop from "@/components/Common/ScrollToTop";
-import PreLoader from "@/components/Common/PreLoader";
-import "bootstrap-icons/font/bootstrap-icons.css";
+  const storeData = {
+    global: getGlobal(),
+    footer: getFooter(),
+    header: getHeader(),
+    hero: getHero(),
+    heroSlider: getHeroSlider(),
+    heroFeature: getHeroFeature(),
+    products: getProducts(),
+    categories: getCategories(),
+    home: { newArrivals: getHomeNewArrivals() },
+  };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
-
-  return (
-    <html lang="en" suppressHydrationWarning={true}>
-      <body>
-        {loading ? (
-          <PreLoader />
-        ) : (
-          <>
-            <ReduxProvider>
-              <CartModalProvider>
-                <ModalProvider>
-                  <PreviewSliderProvider>
-                    <Header />
-                    {children}
-
-                    <QuickViewModal />
-                    <CartSidebarModal />
-                    <PreviewSliderModal />
-                  </PreviewSliderProvider>
-                </ModalProvider>
-              </CartModalProvider>
-            </ReduxProvider>
-            <ScrollToTop />
-            <Footer />
-          </>
-        )}
-      </body>
-    </html>
-  );
+  return <ClientShell storeData={storeData}>{children}</ClientShell>;
 }
