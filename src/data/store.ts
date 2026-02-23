@@ -1,3 +1,21 @@
+export type {
+  Category,
+  CategoriesBlock,
+  FooterBlock,
+  GlobalBlock,
+  HeaderBlock,
+  HeaderNavItem,
+  HeroBlock,
+  HeroFeatureBlock,
+  HeroFeatureItem,
+  HeroSliderBlock,
+  NewArrivalsBlock,
+  Product,
+  ProductsBlock,
+  StoreRow,
+  StoreDataRow,
+} from "./types";
+
 import type {
   Category,
   CategoriesBlock,
@@ -17,7 +35,6 @@ import type {
 } from "./types";
 
 import { flatten2, hydrateHeroSlider } from "./types";
-
 let rows: StoreRow[] = [];
 
 export const setStoreRows = (nextRows: StoreRow[]) => {

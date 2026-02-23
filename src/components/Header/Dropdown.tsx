@@ -4,6 +4,11 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { HeaderNavItem } from "@/data/store";
 
+type SubmenuItem = { title: string; path: string };
+
+const hasSubmenu = (x: HeaderNavItem): x is HeaderNavItem & { submenu: SubmenuItem[] } =>
+  !!x && typeof x === "object" && "submenu" in x && Array.isArray((x as any).submenu);
+
 const Dropdown = ({ menuItem }: { menuItem: HeaderNavItem; stickyMenu: boolean }) => {
   const [open, setOpen] = useState(false);
   const pathUrl = usePathname();
@@ -25,9 +30,11 @@ const Dropdown = ({ menuItem }: { menuItem: HeaderNavItem; stickyMenu: boolean }
     };
   }, []);
 
+  const submenu = hasSubmenu(menuItem) ? menuItem.submenu : [];
+
   const isActive =
-    !!menuItem.submenu?.some((s) => s.path === pathUrl) ||
-    pathUrl.toLowerCase().includes(String(menuItem.title).toLowerCase());
+    submenu.some((s) => s.path === pathUrl) ||
+    pathUrl.toLowerCase().includes(String((menuItem as any).title ?? "").toLowerCase());
 
   return (
     <li ref={ref} className="relative border-b border-gray-2/60 xl:border-0">
@@ -40,12 +47,12 @@ const Dropdown = ({ menuItem }: { menuItem: HeaderNavItem; stickyMenu: boolean }
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="capitalize">{menuItem.title}</span>
+        <span className="capitalize">{(menuItem as any).title}</span>
         <i className={`bi bi-chevron-down text-[12px] leading-none transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       <ul className={`${open ? "block" : "hidden"} pb-3 xl:pb-0 xl:hidden`}>
-        {menuItem.submenu?.map((item, i) => (
+        {submenu.map((item, i) => (
           <li key={i} className="pl-3">
             <Link
               href={item.path}
@@ -64,7 +71,7 @@ const Dropdown = ({ menuItem }: { menuItem: HeaderNavItem; stickyMenu: boolean }
         <div className={`relative bg-white border border-gray-3 rounded-xl shadow-lg min-w-[240px] overflow-hidden transition-opacity duration-150 ${open ? "opacity-100" : "opacity-0"}`}>
           <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-white border-l border-t border-gray-3" />
           <ul className="py-2">
-            {menuItem.submenu?.map((item, i) => {
+            {submenu.map((item, i) => {
               const active = pathUrl === item.path;
               return (
                 <li key={i}>
