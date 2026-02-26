@@ -4,6 +4,9 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
 import Image from "next/image";
 import { updateCartItemQuantity } from "@/redux/features/cart-slice";
+
+import { useAuth } from "@/app/context/AuthContext";
+
 type Props = { item: any; removeItemFromCart: (id: number | string) => any };
 const n = (v: any) => {
   const x = Number(v);
@@ -22,6 +25,7 @@ const fmtMoney = (v: any, currency = "ARS") => {
   }
 };
 const SingleItem = ({ item, removeItemFromCart }: Props) => {
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const dispatch = useDispatch<AppDispatch>();
   const id = Number(item?.variantId ?? item?.id);
   const qty = Math.max(1, n(item?.quantity ?? 1));
@@ -64,7 +68,59 @@ const SingleItem = ({ item, removeItemFromCart }: Props) => {
               </div>
             </div>
             <button
-              onClick={onRemove}
+              onClick={() => {
+                const variantId = String(item?.id ?? "");
+                const value = Number(item?.discountedPrice ?? item?.price ?? 0);
+                const qty = Number(item?.quantity ?? 1);
+                const event_source_url =
+                  typeof window !== "undefined"
+                    ? window.location.href
+                    : undefined;
+                const event_id = (
+                  globalThis.crypto?.randomUUID?.() ??
+                  `${Date.now()}-${Math.random()}`
+                ).toString();
+
+                fetch("/api/meta/capi", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({
+                    event_name: "RemoveFromCart",
+                    event_id,
+                    event_source_url,
+                    custom_data: {
+                      currency: "ARS",
+                      value: value * qty,
+                      content_type: "product",
+                      content_ids: [variantId],
+                      contents: [
+                        { id: variantId, quantity: qty, item_price: value },
+                      ],
+                    },
+                    ...(isAuthenticated && user?.email
+                      ? { user: { email: user.email } }
+                      : {}),
+                  }),
+                  keepalive: true,
+                }).catch(() => {});
+
+                window.fbq?.(
+                  "track",
+                  "RemoveFromCart",
+                  {
+                    currency: "ARS",
+                    value: value * qty,
+                    content_type: "product",
+                    content_ids: [variantId],
+                    contents: [
+                      { id: variantId, quantity: qty, item_price: value },
+                    ],
+                  },
+                  { eventID: event_id },
+                );
+
+                onRemove();
+              }}
               type="button"
               aria-label="Quitar"
               className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 active:scale-[0.98]"

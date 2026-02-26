@@ -12,6 +12,8 @@ import type { AppDispatch } from "@/redux/store";
 import type { Product, Variant } from "@/data/types";
 import { pickI18n } from "@/data/types";
 
+import { useAuth } from "@/app/context/AuthContext";
+
 const n = (v: any) => {
   const x = Number(v);
   return Number.isFinite(x) ? x : 0;
@@ -121,6 +123,7 @@ const pickBestVariantId = (p: Product) => {
 };
 
 const ProductItem = ({ item }: { item: Product }) => {
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
   const [busy, setBusy] = useState<null | "cart" | "wish">(null);
@@ -237,22 +240,68 @@ const ProductItem = ({ item }: { item: Product }) => {
   const handleAddToCart = async () => {
     if (busy || mustPickVariant || !selectedVariant?.id || stock <= 0) return;
     setBusy("cart");
+
+    const variantId = Number((selectedVariant as any).id);
+    const productId = Number((item as any)?.id);
+    const value = n(unitPrice);
+    const event_source_url =
+      typeof window !== "undefined" ? window.location.href : undefined;
+    const event_id = (
+      globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+    ).toString();
+
+    window.fbq?.(
+      "track",
+      "AddToCart",
+      {
+        currency,
+        value,
+        content_type: "product",
+        content_ids: [String(variantId)],
+        contents: [{ id: String(variantId), quantity: 1, item_price: value }],
+      },
+      { eventID: event_id },
+    );
+
+    fetch("/api/meta/capi", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        event_name: "AddToCart",
+        event_id,
+        event_source_url,
+        custom_data: {
+          currency,
+          value,
+          content_type: "product",
+          content_ids: [String(variantId)],
+          contents: [{ id: String(variantId), quantity: 1, item_price: value }],
+          product_id: String(productId),
+          product_name: title,
+        },
+        ...(isAuthenticated && user?.email
+          ? { user: { email: user.email } }
+          : {}),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+
     dispatch(
       addItemToCart({
-        id: Number((selectedVariant as any).id),
+        id: variantId,
         title: `${title || ""} - ${variantLabel(selectedVariant) || ""}`
           .trim()
           .replace(/\s+-\s*$/, ""),
         price: n(basePrice),
-        discountedPrice: n(unitPrice),
+        discountedPrice: value,
         quantity: 1,
         imgs: { thumbnails: previews.slice(0, 6), previews },
       } as any),
     );
+
     setAdded(true);
     setTimeout(() => setBusy(null), 450);
   };
-
   const handleItemToWishList = async () => {
     if (busy) return;
     setBusy("wish");
@@ -410,6 +459,69 @@ const ProductItem = ({ item }: { item: Product }) => {
                       {expanded ? (
                         <button
                           onClick={() => {
+                            const variantId =
+                              selectedVariant?.id != null
+                                ? Number((selectedVariant as any).id)
+                                : null;
+                            const productId = Number((item as any)?.id);
+                            const value = n(unitPrice);
+                            const event_source_url =
+                              typeof window !== "undefined"
+                                ? window.location.href
+                                : undefined;
+                            const event_id = (
+                              globalThis.crypto?.randomUUID?.() ??
+                              `${Date.now()}-${Math.random()}`
+                            ).toString();
+
+                            window.fbq?.(
+                              "track",
+                              "ViewContent",
+                              {
+                                currency,
+                                value,
+                                content_type: "product",
+                                content_ids: [String(variantId ?? productId)],
+                                contents: [
+                                  {
+                                    id: String(variantId ?? productId),
+                                    quantity: 1,
+                                    item_price: value,
+                                  },
+                                ],
+                              },
+                              { eventID: event_id },
+                            );
+
+                            fetch("/api/meta/capi", {
+                              method: "POST",
+                              headers: { "content-type": "application/json" },
+                              body: JSON.stringify({
+                                event_name: "ViewContent",
+                                event_id,
+                                event_source_url,
+                                custom_data: {
+                                  currency,
+                                  value,
+                                  content_type: "product",
+                                  content_ids: [String(variantId ?? productId)],
+                                  contents: [
+                                    {
+                                      id: String(variantId ?? productId),
+                                      quantity: 1,
+                                      item_price: value,
+                                    },
+                                  ],
+                                  product_id: String(productId),
+                                  product_name: title,
+                                },
+                                ...(isAuthenticated && user?.email
+                                  ? { user: { email: user.email } }
+                                  : {}),
+                              }),
+                              keepalive: true,
+                            }).catch(() => {});
+
                             openModal();
                             handleQuickViewUpdate();
                           }}

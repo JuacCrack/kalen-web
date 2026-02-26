@@ -1,11 +1,12 @@
 import ClientShell from "./ClientShell";
+import { MetaPixel } from "./MetaPixel";
 import { fetchStoreRows } from "@/lib/storeApi";
 import {
   setStoreRows,
   getGlobal,
   getFooter,
   getHeader,
-  getHero,  
+  getHero,
   getHeroSlider,
   getHeroFeature,
   getProducts,
@@ -29,5 +30,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     home: { newArrivals: getHomeNewArrivals() },
   };
 
-  return <ClientShell storeData={storeData}>{children}</ClientShell>;
+  return (
+    <ClientShell storeData={storeData}>
+      <MetaPixel />
+      {children}
+    </ClientShell>
+  );
 }

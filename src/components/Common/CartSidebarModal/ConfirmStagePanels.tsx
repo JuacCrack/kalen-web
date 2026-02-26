@@ -91,6 +91,39 @@ function MpCardPaymentForm(props: {
       return new Promise<void>(async (resolve, reject) => {
         setPlacing(true);
         try {
+          const event_source_url =
+            typeof window !== "undefined" ? window.location.href : undefined;
+          const event_id = (
+            globalThis.crypto?.randomUUID?.() ??
+            `${Date.now()}-${Math.random()}`
+          ).toString();
+
+          fetch("/api/meta/capi", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              event_name: "AddPaymentInfo",
+              event_id,
+              event_source_url,
+              custom_data: {
+                currency,
+                value: n(amount),
+                payment_method: "mercadopago_card",
+              },
+              ...(client?.email || client?.phone
+                ? { user: { email: client?.email, phone: client?.phone } }
+                : {}),
+            }),
+            keepalive: true,
+          }).catch(() => {});
+
+          window.fbq?.(
+            "track",
+            "AddPaymentInfo",
+            { currency, value: n(amount) },
+            { eventID: event_id },
+          );
+
           const payload = {
             cardData,
             external_reference:

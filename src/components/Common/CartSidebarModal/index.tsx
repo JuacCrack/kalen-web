@@ -14,6 +14,8 @@ import CheckoutStep from "./CheckoutStep";
 import ConfirmStep from "./ConfirmStep";
 import ConfirmStagePanels, { OrderStage } from "./ConfirmStagePanels";
 
+import { useAuth } from "@/app/context/AuthContext";
+
 type Step = "cart" | "checkout" | "confirm";
 type ShippingMethod = "pickup" | "shipping";
 type PaymentMethod = "mercadopago" | "transfer" | "cash";
@@ -46,6 +48,7 @@ function safeJson<T = any>(x: any): T | null {
 }
 
 const CartSidebarModal = () => {
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const { isCartModalOpen, closeCartModal } = useCartModalContext();
   const dispatch = useDispatch();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
@@ -330,7 +333,7 @@ const CartSidebarModal = () => {
   };
 
   const createOrder = async (payload: any) => {
-    const res = await fetch("https://kalenindumentaria.com/api/order/create/", {
+    const res = await fetch("api/order/create/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -349,13 +352,75 @@ const CartSidebarModal = () => {
       throw Object.assign(new Error(msg), { detail: data });
     }
 
-    return {
-      data,
-      orderRef: {
-        orderId: data?.orderId ?? data?.id ?? null,
-        orderPublicId: data?.publicId ?? data?.orderNumber ?? null,
-      },
+    const orderRef = {
+      orderId: data?.orderId ?? data?.id ?? null,
+      orderPublicId: data?.publicId ?? data?.orderNumber ?? null,
     };
+
+    const currency = String(payload?.currency ?? "ARS");
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    const contents = items
+      .map((it: any) => ({
+        id: String(it?.id ?? it?.variantId ?? it?.productId ?? ""),
+        quantity: Number(it?.quantity ?? 1),
+        item_price: Number(
+          it?.price ?? it?.unitPrice ?? it?.discountedPrice ?? 0,
+        ),
+      }))
+      .filter((x: any) => x.id);
+
+    const value =
+      payload?.total != null
+        ? Number(payload.total)
+        : contents.reduce(
+            (acc: number, it: any) =>
+              acc + (Number(it.item_price) || 0) * (Number(it.quantity) || 0),
+            0,
+          );
+
+    const event_source_url =
+      typeof window !== "undefined" ? window.location.href : undefined;
+    const event_id = (
+      globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+    ).toString();
+
+    const email = payload?.client?.email ?? payload?.email ?? undefined;
+    const phone = payload?.client?.phone ?? payload?.phone ?? undefined;
+
+    fetch("/api/meta/capi", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        event_name: "Purchase",
+        event_id,
+        event_source_url,
+        custom_data: {
+          currency,
+          value: Number(value) || 0,
+          order_id: String(orderRef.orderPublicId ?? orderRef.orderId ?? ""),
+          content_type: "product",
+          content_ids: contents.map((c: any) => c.id),
+          contents,
+        },
+        ...(email || phone ? { user: { email, phone } } : {}),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+
+    window.fbq?.(
+      "track",
+      "Purchase",
+      {
+        currency,
+        value: Number(value) || 0,
+        content_type: "product",
+        content_ids: contents.map((c: any) => c.id),
+        contents,
+      },
+      { eventID: event_id },
+    );
+
+    return { data, orderRef };
   };
 
   const onPlaceOrder = async () => {
@@ -709,7 +774,91 @@ const CartSidebarModal = () => {
                     {confirm.stage === "review" ? (
                       <button
                         type="button"
-                        onClick={onPlaceOrder}
+                        onClick={() => {
+                          if (!confirm.payload) return;
+
+                          const event_source_url =
+                            typeof window !== "undefined"
+                              ? window.location.href
+                              : undefined;
+                          const event_id = (
+                            globalThis.crypto?.randomUUID?.() ??
+                            `${Date.now()}-${Math.random()}`
+                          ).toString();
+
+                          const currency = String(
+                            confirm.payload?.currency ?? "ARS",
+                          );
+                          const items = Array.isArray(confirm.payload?.items)
+                            ? confirm.payload.items
+                            : [];
+                          const contents = items
+                            .map((it: any) => ({
+                              id: String(
+                                it?.id ?? it?.variantId ?? it?.productId ?? "",
+                              ),
+                              quantity: Number(it?.quantity ?? 1),
+                              item_price: Number(
+                                it?.price ??
+                                  it?.unitPrice ??
+                                  it?.discountedPrice ??
+                                  0,
+                              ),
+                            }))
+                            .filter((x: any) => x.id);
+
+                          const value = contents.reduce(
+                            (acc: number, it: any) =>
+                              acc +
+                              (Number(it.item_price) || 0) *
+                                (Number(it.quantity) || 0),
+                            0,
+                          );
+                          const num_items = contents.reduce(
+                            (acc: number, it: any) =>
+                              acc + (Number(it.quantity) || 0),
+                            0,
+                          );
+                          const content_ids = contents.map((c: any) => c.id);
+
+                          fetch("/api/meta/capi", {
+                            method: "POST",
+                            headers: { "content-type": "application/json" },
+                            body: JSON.stringify({
+                              event_name: "InitiateCheckout",
+                              event_id,
+                              event_source_url,
+                              custom_data: {
+                                currency,
+                                value,
+                                num_items,
+                                content_type: "product",
+                                content_ids,
+                                contents,
+                              },
+                              ...(isAuthenticated && user?.email
+                                ? { user: { email: user.email } }
+                                : {}),
+                            }),
+                            keepalive: true,
+                          }).catch(() => {});
+
+                          window.fbq?.(
+                            "track",
+                            "InitiateCheckout",
+                            {
+                              currency,
+                              value,
+                              num_items,
+                              content_type: "product",
+                              content_ids,
+                              contents,
+                            },
+                            { eventID: event_id },
+                          );
+
+                          onPlaceOrder();
+                        }}
                         disabled={placing || !confirm.payload}
                         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#fe62b2] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(254,98,178,.25)] transition hover:brightness-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                       >

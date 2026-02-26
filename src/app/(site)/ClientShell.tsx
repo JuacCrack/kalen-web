@@ -18,6 +18,7 @@ import PreLoader from "@/components/Common/PreLoader";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { StoreDataProvider } from "./StoreDataProvider";
 import type { StoreData } from "./StoreDataProvider";
+import { AuthProvider } from "../context/AuthContext";
 
 export default function ClientShell({
   children,
@@ -39,21 +40,23 @@ export default function ClientShell({
           <PreLoader />
         ) : (
           <StoreDataProvider value={storeData}>
-            <ReduxProvider>
-              <CartModalProvider>
-                <ModalProvider>
-                  <PreviewSliderProvider>
-                    <Header />
-                    {children}
-                    <QuickViewModal />
-                    <CartSidebarModal />
-                    <PreviewSliderModal />
-                  </PreviewSliderProvider>
-                </ModalProvider>
-              </CartModalProvider>
-            </ReduxProvider>
-            <ScrollToTop />
-            <Footer />
+            <AuthProvider>
+              <ReduxProvider>
+                <CartModalProvider>
+                  <ModalProvider>
+                    <PreviewSliderProvider>
+                      <Header />
+                      {children}
+                      <QuickViewModal />
+                      <CartSidebarModal />
+                      <PreviewSliderModal />
+                    </PreviewSliderProvider>
+                  </ModalProvider>
+                </CartModalProvider>
+              </ReduxProvider>
+              <ScrollToTop />
+              <Footer />
+            </AuthProvider>
           </StoreDataProvider>
         )}
       </body>

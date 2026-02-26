@@ -10,6 +10,9 @@ import { useAppSelector } from "@/redux/store";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
 import { useStoreData } from "@/app/(site)/StoreDataProvider";
+import AccountAuthModal from "./AccountAuthModal";
+
+import { useAuth } from "@/app/context/AuthContext";
 
 const getByPath = (obj: any, path: string) => {
   if (!obj || !path) return undefined;
@@ -110,46 +113,87 @@ const SearchBar = ({
   setQuery: (v: string) => void;
   withClose?: boolean;
   ariaClose?: string;
-}) => (
-  <div className="max-w-[475px] w-full mx-auto">
-    <form action="/shop-whith-sidebar" role="search" aria-label="Buscar productos">
-      <div className="flex items-center">
-        <CustomSelect options={categories} />
-        <div className="relative max-w-[333px] sm:min-w-[333px] w-full">
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 inline-block w-px h-5.5 bg-gray-4" />
-          <input
-            onChange={(e) => setQuery(e.target.value)}
-            value={query}
-            type="search"
-            name="search"
-            id="search"
-            placeholder={placeholder}
-            autoComplete="off"
-            className="custom-search w-full rounded-r-[5px] bg-gray-1 !border-l-0 border border-gray-3 py-2.5 pl-4 pr-20 outline-none ease-in duration-200 focus:border-[color:var(--brand-primary,#fe62b2)] focus:ring-4 focus:ring-[color:var(--brand-secondary,#ffaed7)]/40"
-          />
-          <button
-            id="search-btn"
-            aria-label={ariaSubmit}
-            type="submit"
-            className="flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 ease-in duration-200 hover:text-[color:var(--brand-primary,#fe62b2)]"
-          >
-            <i className="bi bi-search text-[18px] leading-none" />
-          </button>
+}) => {
+  const { user, isAuthenticated, loading, logout } = useAuth();
 
-          {withClose ? (
-            <label
-              htmlFor="mobile-search-toggle"
-              aria-label={ariaClose}
-              className="hidden lg:peer-checked:inline-flex items-center justify-center absolute right-11 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border border-gray-3 bg-white text-[color:var(--brand-primary,#fe62b2)] ease-in duration-200 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 cursor-pointer"
+  return (
+    <div className="max-w-[475px] w-full mx-auto">
+      <form
+        action="/shop-whith-sidebar"
+        role="search"
+        aria-label="Buscar productos"
+        onSubmit={(e) => {
+          const q = query.trim();
+          if (!q) return;
+
+          const event_source_url =
+            typeof window !== "undefined" ? window.location.href : undefined;
+          const event_id = (
+            globalThis.crypto?.randomUUID?.() ??
+            `${Date.now()}-${Math.random()}`
+          ).toString();
+
+          fetch("/api/meta/capi", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              event_name: "Search",
+              event_id,
+              event_source_url,
+              custom_data: { search_string: q },
+              ...(isAuthenticated && user?.email
+                ? { user: { email: user.email } }
+                : {}),
+            }),
+            keepalive: true,
+          }).catch(() => {});
+
+          window.fbq?.(
+            "track",
+            "Search",
+            { search_string: q },
+            { eventID: event_id },
+          );
+        }}
+      >
+        <div className="flex items-center">
+          <CustomSelect options={categories} />
+          <div className="relative max-w-[333px] sm:min-w-[333px] w-full">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 inline-block w-px h-5.5 bg-gray-4" />
+            <input
+              onChange={(e) => setQuery(e.target.value)}
+              value={query}
+              type="search"
+              name="search"
+              id="search"
+              placeholder={placeholder}
+              autoComplete="off"
+              className="custom-search w-full rounded-r-[5px] bg-gray-1 !border-l-0 border border-gray-3 py-2.5 pl-4 pr-20 outline-none ease-in duration-200 focus:border-[color:var(--brand-primary,#fe62b2)] focus:ring-4 focus:ring-[color:var(--brand-secondary,#ffaed7)]/40"
+            />
+            <button
+              id="search-btn"
+              aria-label={ariaSubmit}
+              type="submit"
+              className="flex items-center justify-center absolute right-3 top-1/2 -translate-y-1/2 ease-in duration-200 hover:text-[color:var(--brand-primary,#fe62b2)]"
             >
-              <i className="bi bi-x-lg text-[14px] leading-none" />
-            </label>
-          ) : null}
+              <i className="bi bi-search text-[18px] leading-none" />
+            </button>
+
+            {withClose ? (
+              <label
+                htmlFor="mobile-search-toggle"
+                aria-label={ariaClose}
+                className="hidden lg:peer-checked:inline-flex items-center justify-center absolute right-11 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border border-gray-3 bg-white text-[color:var(--brand-primary,#fe62b2)] ease-in duration-200 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 cursor-pointer"
+              >
+                <i className="bi bi-x-lg text-[14px] leading-none" />
+              </label>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </form>
-  </div>
-);
+      </form>
+    </div>
+  );
+};
 
 const Header = () => {
   const store = useStoreData();
@@ -374,25 +418,11 @@ const Header = () => {
           <div className="grid grid-cols-3 items-center gap-4 lg:flex lg:flex-row lg:gap-5 lg:items-center xl:justify-between">
             <div className="col-span-1 flex items-center gap-4 lg:col-auto lg:order-1 lg:w-auto">
               <div className="flex items-center gap-3">
-                <Link
-                  href={resolveTplString(
-                    header.links.account.href || "/",
-                    store,
-                  )}
-                  className="flex items-center gap-2.5 rounded-full border border-gray-3 bg-gray-1 text-[color:var(--brand-primary,#fe62b2)] ease-in duration-200 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 px-3 h-10 active:scale-[0.98]"
-                >
-                  <i
-                    className={`bi ${header.links.account.icon ?? "bi-person"} text-[22px] leading-none`}
-                  />
-                  <div className="hidden lg:block leading-tight">
-                    <span className="block text-2xs text-dark-4 uppercase">
-                      {resolveTplString(header.links.account.kicker, store)}
-                    </span>
-                    <p className="font-medium text-custom-sm text-dark">
-                      {resolveTplString(header.links.account.label, store)}
-                    </p>
-                  </div>
-                </Link>
+                <AccountAuthModal
+                  kicker={resolveTplString(header.links.account.kicker, store)}
+                  label={resolveTplString(header.links.account.label, store)}
+                  icon={header.links.account.icon ?? "bi-person"}
+                />
 
                 <button
                   onClick={openCartModal}
