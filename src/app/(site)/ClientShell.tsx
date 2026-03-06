@@ -16,18 +16,17 @@ import PreviewSliderModal from "@/components/Common/PreviewSlider";
 import ScrollToTop from "@/components/Common/ScrollToTop";
 import PreLoader from "@/components/Common/PreLoader";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { StoreDataProvider } from "./StoreDataProvider";
-import type { StoreData } from "./StoreDataProvider";
+import { StoreDataProvider, type StoreRows } from "./StoreDataProvider";
 import { AuthProvider } from "../context/AuthContext";
 
 export default function ClientShell({
   children,
-  storeData,
+  rows,
 }: {
   children: React.ReactNode;
-  storeData: StoreData;
+  rows: StoreRows;
 }) {
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 1000);
@@ -39,7 +38,7 @@ export default function ClientShell({
         {loading ? (
           <PreLoader />
         ) : (
-          <StoreDataProvider value={storeData}>
+          <StoreDataProvider rows={rows}>
             <AuthProvider>
               <ReduxProvider>
                 <CartModalProvider>

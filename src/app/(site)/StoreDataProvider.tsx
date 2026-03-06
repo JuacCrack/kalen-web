@@ -1,64 +1,46 @@
 "use client";
 
-import React, { createContext, useContext } from "react";
-import type {
-  CategoriesBlock,
-  FooterBlock,
-  GlobalBlock,
-  HeaderBlock,
-  HeroBlock,
-  HeroFeatureBlock,
-  HeroSliderBlock,
-  HomeBlock,
-  ProductsBlock,
-  StoreData as StoreRows,
-  StoreDataRow,
-} from "@/data/types";
+import React, { createContext, useContext, useMemo } from "react";
 
-export type StoreData = {
-  global: GlobalBlock;
-  footer: FooterBlock;
-  header: HeaderBlock;
-  hero: HeroBlock;
-  heroSlider: HeroSliderBlock;
-  heroFeature: HeroFeatureBlock;
-  products: ProductsBlock;
-  categories: CategoriesBlock;
-  home: HomeBlock;
+export type StoreRow = { component: string; key?: string; order?: number; data: unknown };
+export type StoreRows = StoreRow[];
+
+export type StoreApi = {
+  get<T = unknown>(component: string, fallback?: T): T;
+  has(component: string): boolean;
+  rows: StoreRows;
 };
 
-const pick = <K extends StoreDataRow["component"]>(
-  rows: StoreRows,
-  component: K
-): Extract<StoreDataRow, { component: K }>["data"] => {
-  const row = rows.find((r) => r.component === component);
-  if (!row) throw new Error(`Missing store block: ${component}`);
-  return row.data as any;
-};
+const Ctx = createContext<StoreApi | null>(null);
 
-export const normalizeStoreData = (rows: StoreRows): StoreData => ({
-  global: pick(rows, "global"),
-  footer: pick(rows, "footer"),
-  header: pick(rows, "header"),
-  hero: pick(rows, "hero"),
-  heroSlider: pick(rows, "heroSlider"),
-  heroFeature: pick(rows, "heroFeature"),
-  products: pick(rows, "products"),
-  categories: pick(rows, "categories"),
-  home: pick(rows, "home"),
-});
-
-const Ctx = createContext<StoreData | null>(null);
+const isObj = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null;
 
 export const StoreDataProvider = ({
-  value,
+  rows,
   children,
 }: {
-  value: StoreData;
+  rows: StoreRows;
   children: React.ReactNode;
-}) => <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}) => {
+  const api = useMemo<StoreApi>(() => {
+    const mem = new Map<string, unknown>();
+    for (const r of rows) {
+      if (!isObj(r)) continue;
+      const c = typeof (r as any).component === "string" ? (r as any).component : "";
+      if (!c) continue;
+      mem.set(c, (r as any).data);
+    }
+    return {
+      rows,
+      has: (c) => mem.has(c),
+      get: (c, fallback) => ((mem.get(c) ?? fallback) as any),
+    };
+  }, [rows]);
 
-export const useStoreData = () => {
+  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+};
+
+export const useStore = () => {
   const v = useContext(Ctx);
   if (!v) throw new Error("StoreDataProvider missing");
   return v;

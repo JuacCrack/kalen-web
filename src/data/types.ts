@@ -147,53 +147,21 @@ export type NewArrivalsBlock = {
 
 export type HomeBlock = { newArrivals?: NewArrivalsBlock };
 
-export type HeroImage = {
-  src: string;
-  alt: string;
-  width: number;
-  height: number;
-};
-
-export type HeroRightCard = {
-  productId: number;
-  badgeLeft: string;
-  badgeRight: string;
-  cta: { label: string; href?: string };
-  image?: HeroImage;
-};
-
-export type HeroBlock = {
-  sectionBg?: string;
-  left?: { bgShapesImage?: HeroImage };
-  rightCards: HeroRightCard[];
-};
-
-export type HeroSlide = {
-  productId?: number;
-  badgeLeft: string;
-  badgeRight: string;
-  cta: { label: string; href?: string };
-  title?: string;
-  description?: string;
-  image?: HeroImage;
-};
-
-export type HeroSliderBlock = {
-  swiper: {
-    spaceBetween?: number;
-    centeredSlides?: boolean;
-    autoplay?: { delay?: number; disableOnInteraction?: boolean };
-    pagination?: { clickable?: boolean };
-  };
-  slides: HeroSlide[];
-};
+export type HeroImg = { lg: string; sm: string };
 
 export type HeroFeatureItem = {
   icon: IconRef;
   title: string;
   description: Tpl<string>;
 };
-export type HeroFeatureBlock = { items: HeroFeatureItem[] };
+
+export type HeroBlockData = {
+  heroCarrousel: HeroImg[];
+  heroCards: HeroImg[];
+  heroFeature: HeroFeatureItem[];
+};
+
+export type HeroBlock = StoreRow<"hero", HeroBlockData>;
 
 export type HeaderNavLink = { title: string; path: Tpl<string> };
 
@@ -278,13 +246,21 @@ export type StoreDataRow =
   | StoreRow<"categories", CategoriesBlock>
   | StoreRow<"products", ProductsBlock>
   | StoreRow<"header", HeaderBlock>
-  | StoreRow<"hero", HeroBlock>
-  | StoreRow<"heroSlider", HeroSliderBlock>
-  | StoreRow<"heroFeature", HeroFeatureBlock>
+  | HeroBlock
   | StoreRow<"home", HomeBlock>
   | StoreRow<"footer", FooterBlock>;
 
-export type StoreData = StoreDataRow[];
+export type StoreRows = StoreDataRow[];
+
+export type StoreData = {
+  global: GlobalBlock;
+  footer: FooterBlock;
+  header: HeaderBlock;
+  hero: HeroBlock["data"];
+  products: ProductsBlock;
+  categories: CategoriesBlock;
+  home: HomeBlock;
+};
 
 export const flatten2 = <T>(x: any): T[] =>
   Array.isArray(x)
@@ -314,49 +290,4 @@ export const getBestVisibleVariant = (p: Product) => {
     (a, b) => (Number(a.position ?? 0) || 0) - (Number(b.position ?? 0) || 0),
   );
   return vs.find((v) => v?.visible) ?? vs[0];
-};
-
-export const resolveProductHeroImage = (p: Product) => {
-  const pw = indexProductImagesById(p) as ProductWithIndex;
-  const v = getBestVisibleVariant(p);
-  const vi = v ? resolveVariantImage(pw, v) : undefined;
-  const pi = vi ?? getBestProductImage(p);
-  if (!pi?.src) return undefined;
-  const alt = typeof pi.alt === "object" ? pickI18n(pi.alt) : "";
-  return {
-    src: pi.src,
-    alt,
-    width: Number(pi.width ?? 0) || 0,
-    height: Number(pi.height ?? 0) || 0,
-  };
-};
-
-export const hydrateHeroSlider = (
-  heroSlider: HeroSliderBlock,
-  products: ProductsBlock,
-): HeroSliderBlock => {
-  const byId = new Map<number, Product>(
-    flatten2<Product>(products?.items)
-      .filter(Boolean)
-      .map((p) => [Number(p.id), p]),
-  );
-  const slides = (
-    Array.isArray(heroSlider?.slides) ? heroSlider.slides : []
-  ).map((s) => {
-    const pid = s?.productId != null ? Number(s.productId) : undefined;
-    const p = pid != null ? byId.get(pid) : undefined;
-    const image = s?.image?.src
-      ? s.image
-      : p
-        ? resolveProductHeroImage(p)
-        : undefined;
-    const title = s?.title?.trim?.() ? s.title : p ? pickI18n(p.name) : s.title;
-    const description = s?.description?.trim?.()
-      ? s.description
-      : p
-        ? pickI18n(p.description)
-        : s.description;
-    return { ...s, title, description, image };
-  });
-  return { ...heroSlider, slides };
 };

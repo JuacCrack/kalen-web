@@ -2,13 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
-import {
-  removeItemFromCart,
-  selectTotalPrice,
-} from "@/redux/features/cart-slice";
+import { removeItemFromCart, selectTotalPrice } from "@/redux/features/cart-slice";
 import { useAppSelector } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { useStoreData } from "@/app/(site)/StoreDataProvider";
+import { useStore } from "@/app/(site)/StoreDataProvider";
 import CartStep from "./CartStep";
 import CheckoutStep from "./CheckoutStep";
 import ConfirmStep from "./ConfirmStep";
@@ -53,15 +50,14 @@ const CartSidebarModal = () => {
   const dispatch = useDispatch();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
   const totalPrice = useSelector(selectTotalPrice);
-  const { global } = useStoreData();
+  const store = useStore();
+  const globalRow = store.get<any>("global", {});
+  const global = globalRow?.data ?? globalRow;
   const currency = "ARS";
   const minimumPurchase = n(global?.store?.minimumPurchase ?? 0);
 
   const shippingsMetods = useMemo(
-    () =>
-      Array.isArray((global as any)?.store?.shippings_metods)
-        ? (global as any).store.shippings_metods
-        : [],
+    () => (Array.isArray((global as any)?.store?.shippings_metods) ? (global as any).store.shippings_metods : []),
     [global],
   );
 
@@ -75,8 +71,7 @@ const CartSidebarModal = () => {
     phone: "",
   });
 
-  const [shippingMethod, setShippingMethod] =
-    useState<ShippingMethod>("pickup");
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("pickup");
   const [shipping, setShipping] = useState({
     country: "AR",
     province: "",
@@ -114,8 +109,7 @@ const CartSidebarModal = () => {
 
   const [shippingExtra, setShippingExtra] = useState(0);
   const [selectedShippingKey, setSelectedShippingKey] = useState<string>("");
-  const [selectedShippingTitle, setSelectedShippingTitle] =
-    useState<string>("");
+  const [selectedShippingTitle, setSelectedShippingTitle] = useState<string>("");
 
   const [transferProof, setTransferProof] = useState<File | null>(null);
 
@@ -128,15 +122,9 @@ const CartSidebarModal = () => {
   });
 
   const itemsTotal = useMemo(() => n(totalPrice), [totalPrice]);
-  const totalWithExtras = useMemo(
-    () => itemsTotal + n(shippingExtra),
-    [itemsTotal, shippingExtra],
-  );
+  const totalWithExtras = useMemo(() => itemsTotal + n(shippingExtra), [itemsTotal, shippingExtra]);
 
-  const displayTotal = useMemo(
-    () => (step === "cart" ? itemsTotal : totalWithExtras),
-    [step, itemsTotal, totalWithExtras],
-  );
+  const displayTotal = useMemo(() => (step === "cart" ? itemsTotal : totalWithExtras), [step, itemsTotal, totalWithExtras]);
 
   const canPayByMin = useMemo(() => {
     if (!minimumPurchase) return true;
@@ -145,28 +133,16 @@ const CartSidebarModal = () => {
 
   const canProceedToCheckout = cartItems.length > 0;
 
-  const clientDone = !!(
-    client.firstName.trim() &&
-    client.lastName.trim() &&
-    client.email.trim() &&
-    client.phone.trim()
-  );
+  const clientDone = !!(client.firstName.trim() && client.lastName.trim() && client.email.trim() && client.phone.trim());
 
   const shippingDone =
     shippingMethod === "pickup"
       ? true
-      : !!(
-          shipping.province.trim() &&
-          shipping.city.trim() &&
-          shipping.street.trim() &&
-          shipping.number.trim() &&
-          shipping.postalCode.trim()
-        );
+      : !!(shipping.province.trim() && shipping.city.trim() && shipping.street.trim() && shipping.number.trim() && shipping.postalCode.trim());
 
   const paymentDone = !!paymentMethod;
 
-  const canSubmit =
-    canPayByMin && clientDone && shippingDone && paymentDone && !placing;
+  const canSubmit = canPayByMin && clientDone && shippingDone && paymentDone && !placing;
 
   const mpSubmitRef = useRef<null | (() => Promise<any>)>(null);
   const [mpSubmitReady, setMpSubmitReady] = useState(false);
@@ -346,9 +322,7 @@ const CartSidebarModal = () => {
     const ok = !!(res.ok && data && data.ok === true);
 
     if (!ok) {
-      const msg =
-        data?.message ||
-        "No pudimos crear tu orden. Revisá tus datos e intentá nuevamente.";
+      const msg = data?.message || "No pudimos crear tu orden. Revisá tus datos e intentá nuevamente.";
       throw Object.assign(new Error(msg), { detail: data });
     }
 
@@ -363,9 +337,7 @@ const CartSidebarModal = () => {
       .map((it: any) => ({
         id: String(it?.id ?? it?.variantId ?? it?.productId ?? ""),
         quantity: Number(it?.quantity ?? 1),
-        item_price: Number(
-          it?.price ?? it?.unitPrice ?? it?.discountedPrice ?? 0,
-        ),
+        item_price: Number(it?.price ?? it?.unitPrice ?? it?.discountedPrice ?? 0),
       }))
       .filter((x: any) => x.id);
 
@@ -373,16 +345,12 @@ const CartSidebarModal = () => {
       payload?.total != null
         ? Number(payload.total)
         : contents.reduce(
-            (acc: number, it: any) =>
-              acc + (Number(it.item_price) || 0) * (Number(it.quantity) || 0),
+            (acc: number, it: any) => acc + (Number(it.item_price) || 0) * (Number(it.quantity) || 0),
             0,
           );
 
-    const event_source_url =
-      typeof window !== "undefined" ? window.location.href : undefined;
-    const event_id = (
-      globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
-    ).toString();
+    const event_source_url = typeof window !== "undefined" ? window.location.href : undefined;
+    const event_id = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).toString();
 
     const email = payload?.client?.email ?? payload?.email ?? undefined;
     const phone = payload?.client?.phone ?? payload?.phone ?? undefined;
@@ -443,24 +411,17 @@ const CartSidebarModal = () => {
 
       if (paymentMethod === "transfer") {
         confirm.setStage("transfer");
-        confirm.setMsg(
-          "Orden creada con éxito. Ahora realizá la transferencia y subí el comprobante.",
-        );
+        confirm.setMsg("Orden creada con éxito. Ahora realizá la transferencia y subí el comprobante.");
         setPlacing(false);
         return;
       }
 
       confirm.setStage("cash");
-      confirm.setMsg(
-        "Orden creada con éxito. Te esperamos para abonar en efectivo al retirar.",
-      );
+      confirm.setMsg("Orden creada con éxito. Te esperamos para abonar en efectivo al retirar.");
       setPlacing(false);
     } catch (e: any) {
       confirm.setStage("error");
-      confirm.setMsg(
-        e?.message ||
-          "Error de conexión. Revisá tu internet e intentá nuevamente.",
-      );
+      confirm.setMsg(e?.message || "Error de conexión. Revisá tu internet e intentá nuevamente.");
       setPlacing(false);
     }
   };
@@ -482,8 +443,7 @@ const CartSidebarModal = () => {
     setMpSubmit(null);
   };
 
-  const toggle = (k: Exclude<AccordionKey, null>) =>
-    setOpenKey((cur) => (cur === k ? null : k));
+  const toggle = (k: Exclude<AccordionKey, null>) => setOpenKey((cur) => (cur === k ? null : k));
 
   const headerTitle =
     step === "cart"
@@ -508,9 +468,7 @@ const CartSidebarModal = () => {
           : confirm.msg || "";
 
   const confirmBody =
-    confirm.stage === "review" ||
-    confirm.stage === "success" ||
-    confirm.stage === "error" ? (
+    confirm.stage === "review" || confirm.stage === "success" || confirm.stage === "error" ? (
       <ConfirmStep
         confirmStage={confirm.stage as any}
         confirmMsg={confirm.msg}
@@ -580,12 +538,8 @@ const CartSidebarModal = () => {
             <div className="sticky top-0 z-10 border-b border-black/5 bg-white/90 backdrop-blur px-4 py-4 sm:px-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="text-lg font-semibold text-slate-900 sm:text-xl">
-                    {headerTitle}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-600">
-                    {headerSubtitle}
-                  </div>
+                  <div className="text-lg font-semibold text-slate-900 sm:text-xl">{headerTitle}</div>
+                  <div className="mt-1 text-sm text-slate-600">{headerSubtitle}</div>
                 </div>
                 <button
                   onClick={requestClose}
@@ -606,9 +560,7 @@ const CartSidebarModal = () => {
                     disabled={placing || mpLock}
                     className={[
                       "inline-flex items-center gap-2 transition disabled:cursor-not-allowed disabled:opacity-50",
-                      step === "cart"
-                        ? "text-[#fe62b2]"
-                        : "text-slate-500 hover:text-[#fe62b2]",
+                      step === "cart" ? "text-[#fe62b2]" : "text-slate-500 hover:text-[#fe62b2]",
                     ].join(" ")}
                     aria-current={step === "cart" ? "step" : undefined}
                   >
@@ -618,17 +570,11 @@ const CartSidebarModal = () => {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      canProceedToCheckout && canPayByMin && setStep("checkout")
-                    }
-                    disabled={
-                      !canProceedToCheckout || !canPayByMin || placing || mpLock
-                    }
+                    onClick={() => canProceedToCheckout && canPayByMin && setStep("checkout")}
+                    disabled={!canProceedToCheckout || !canPayByMin || placing || mpLock}
                     className={[
                       "inline-flex items-center gap-2 transition disabled:cursor-not-allowed disabled:opacity-50",
-                      step === "checkout"
-                        ? "text-[#fe62b2]"
-                        : "text-slate-500 hover:text-[#fe62b2]",
+                      step === "checkout" ? "text-[#fe62b2]" : "text-slate-500 hover:text-[#fe62b2]",
                     ].join(" ")}
                     aria-current={step === "checkout" ? "step" : undefined}
                   >
@@ -642,9 +588,7 @@ const CartSidebarModal = () => {
                     disabled={!canSubmit || placing || mpLock}
                     className={[
                       "inline-flex items-center gap-2 transition disabled:cursor-not-allowed disabled:opacity-50",
-                      step === "confirm"
-                        ? "text-[#fe62b2]"
-                        : "text-slate-500 hover:text-[#fe62b2]",
+                      step === "confirm" ? "text-[#fe62b2]" : "text-slate-500 hover:text-[#fe62b2]",
                     ].join(" ")}
                     aria-current={step === "confirm" ? "step" : undefined}
                   >
@@ -657,12 +601,7 @@ const CartSidebarModal = () => {
                   <div
                     className="h-full rounded-full bg-[#fe62b2] transition-all"
                     style={{
-                      width:
-                        step === "cart"
-                          ? "33%"
-                          : step === "checkout"
-                            ? "66%"
-                            : "100%",
+                      width: step === "cart" ? "33%" : step === "checkout" ? "66%" : "100%",
                     }}
                   />
                 </div>
@@ -704,22 +643,14 @@ const CartSidebarModal = () => {
             <div className="sticky bottom-0 border-t border-black/5 bg-white/90 backdrop-blur px-4 py-4 sm:px-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-slate-600">
-                    Total
-                  </div>
-                  <div className="mt-1 text-xl font-semibold text-slate-900">
-                    {fmtMoney(displayTotal, currency)}
-                  </div>
+                  <div className="text-xs font-semibold text-slate-600">Total</div>
+                  <div className="mt-1 text-xl font-semibold text-slate-900">{fmtMoney(displayTotal, currency)}</div>
 
                   {!canPayByMin && minimumPurchase > 0 ? (
                     <div className="mt-1 text-xs text-slate-600">
-                      El mínimo de compra es{" "}
-                      {fmtMoney(minimumPurchase, currency)}, te faltan{" "}
+                      El mínimo de compra es {fmtMoney(minimumPurchase, currency)}, te faltan{" "}
                       <span className="font-semibold text-slate-900">
-                        {fmtMoney(
-                          Math.max(0, minimumPurchase - itemsTotal),
-                          currency,
-                        )}
+                        {fmtMoney(Math.max(0, minimumPurchase - itemsTotal), currency)}
                       </span>{" "}
                       para poder completar tu compra
                     </div>
@@ -730,9 +661,7 @@ const CartSidebarModal = () => {
                   <button
                     type="button"
                     onClick={() => setStep("checkout")}
-                    disabled={
-                      !cartItems.length || !canPayByMin || placing || mpLock
-                    }
+                    disabled={!cartItems.length || !canPayByMin || placing || mpLock}
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#fe62b2] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(254,98,178,.25)] transition hover:brightness-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <i className="bi bi-chevron-right" />
@@ -777,48 +706,25 @@ const CartSidebarModal = () => {
                         onClick={() => {
                           if (!confirm.payload) return;
 
-                          const event_source_url =
-                            typeof window !== "undefined"
-                              ? window.location.href
-                              : undefined;
-                          const event_id = (
-                            globalThis.crypto?.randomUUID?.() ??
-                            `${Date.now()}-${Math.random()}`
-                          ).toString();
+                          const event_source_url = typeof window !== "undefined" ? window.location.href : undefined;
+                          const event_id = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).toString();
 
-                          const currency = String(
-                            confirm.payload?.currency ?? "ARS",
-                          );
-                          const items = Array.isArray(confirm.payload?.items)
-                            ? confirm.payload.items
-                            : [];
+                          const currency = String(confirm.payload?.currency ?? "ARS");
+                          const items = Array.isArray(confirm.payload?.items) ? confirm.payload.items : [];
                           const contents = items
                             .map((it: any) => ({
-                              id: String(
-                                it?.id ?? it?.variantId ?? it?.productId ?? "",
-                              ),
+                              id: String(it?.id ?? it?.variantId ?? it?.productId ?? ""),
                               quantity: Number(it?.quantity ?? 1),
-                              item_price: Number(
-                                it?.price ??
-                                  it?.unitPrice ??
-                                  it?.discountedPrice ??
-                                  0,
-                              ),
+                              item_price: Number(it?.price ?? it?.unitPrice ?? it?.discountedPrice ?? 0),
                             }))
                             .filter((x: any) => x.id);
 
                           const value = contents.reduce(
                             (acc: number, it: any) =>
-                              acc +
-                              (Number(it.item_price) || 0) *
-                                (Number(it.quantity) || 0),
+                              acc + (Number(it.item_price) || 0) * (Number(it.quantity) || 0),
                             0,
                           );
-                          const num_items = contents.reduce(
-                            (acc: number, it: any) =>
-                              acc + (Number(it.quantity) || 0),
-                            0,
-                          );
+                          const num_items = contents.reduce((acc: number, it: any) => acc + (Number(it.quantity) || 0), 0);
                           const content_ids = contents.map((c: any) => c.id);
 
                           fetch("/api/meta/capi", {
@@ -836,9 +742,7 @@ const CartSidebarModal = () => {
                                 content_ids,
                                 contents,
                               },
-                              ...(isAuthenticated && user?.email
-                                ? { user: { email: user.email } }
-                                : {}),
+                              ...(isAuthenticated && user?.email ? { user: { email: user.email } } : {}),
                             }),
                             keepalive: true,
                           }).catch(() => {});
@@ -873,15 +777,11 @@ const CartSidebarModal = () => {
                           <>Continuar</>
                         )}
                       </button>
-                    ) : confirm.stage === "transfer" ||
-                      confirm.stage === "cash" ? (
+                    ) : confirm.stage === "transfer" || confirm.stage === "cash" ? (
                       <button
                         type="button"
                         onClick={() => confirm.setStage("success")}
-                        disabled={
-                          placing ||
-                          (confirm.stage === "transfer" && !transferProof)
-                        }
+                        disabled={placing || (confirm.stage === "transfer" && !transferProof)}
                         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#fe62b2] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(254,98,178,.25)] transition hover:brightness-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <i className="bi bi-check2-circle" />
@@ -898,16 +798,12 @@ const CartSidebarModal = () => {
 
                           setPlacing(true);
                           try {
-                            await submit(); // esto llama al submit fake seteado por FakeCardForm
+                            await submit();
                             confirm.setStage("success");
-                            confirm.setMsg(
-                              "Pago de prueba OK. Esto es un checkout fake (no se cobró nada).",
-                            );
+                            confirm.setMsg("Pago de prueba OK. Esto es un checkout fake (no se cobró nada).");
                           } catch {
                             confirm.setStage("error");
-                            confirm.setMsg(
-                              "Formulario incompleto. Completá los datos de la tarjeta.",
-                            );
+                            confirm.setMsg("Formulario incompleto. Completá los datos de la tarjeta.");
                           } finally {
                             setPlacing(false);
                           }

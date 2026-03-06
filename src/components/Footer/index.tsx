@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import Link from "next/link";
-import { useStoreData } from "@/app/(site)/StoreDataProvider";
+import { useStore } from "@/app/(site)/StoreDataProvider";
 
 const getByPath = (obj: any, path: string) => {
   if (!obj || !path) return undefined;
@@ -32,14 +32,17 @@ const resolveTplString = (value: any, root: any) => {
   });
 };
 
-const formatTemplate = (
-  template: string,
-  vars: Record<string, string | number>,
-) => template.replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? `{${k}}`));
+const formatTemplate = (template: string, vars: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? `{${k}}`));
 
 const Footer = () => {
-  const store = useStoreData();
-  const { footer, global, header } = store;
+  const store = useStore();
+  const footerRow = store.get<any>("footer", {});
+  const globalRow = store.get<any>("global", {});
+  const headerRow = store.get<any>("header", {});
+  const footer = footerRow?.data ?? footerRow;
+  const global = globalRow?.data ?? globalRow;
+  const header = headerRow?.data ?? headerRow;
   const year = useMemo(() => new Date().getFullYear(), []);
 
   const resolvedUiColors = useMemo(() => {
@@ -47,10 +50,8 @@ const Footer = () => {
     return typeof v === "object" && v ? v : undefined;
   }, [header.ui?.colors, store]);
 
-  const primary =
-    resolvedUiColors?.primary ?? global.colors?.primary ?? "#fe62b2";
-  const secondary =
-    resolvedUiColors?.secondary ?? global.colors?.secondary ?? "#ffaed7";
+  const primary = resolvedUiColors?.primary ?? global.colors?.primary ?? "#fe62b2";
+  const secondary = resolvedUiColors?.secondary ?? global.colors?.secondary ?? "#ffaed7";
 
   return (
     <footer
@@ -65,73 +66,51 @@ const Footer = () => {
       <div className="mx-auto max-w-[1170px] px-4 sm:px-8 xl:px-0">
         <div className="grid grid-cols-1 gap-10 py-12 md:grid-cols-2">
           <div className="max-w-[520px]">
-            <Link
-              href={resolveTplString(footer.brandHref || "/", store)}
-              className="inline-flex items-center gap-2"
-            >
+            <Link href={resolveTplString(footer.brandHref || "/", store)} className="inline-flex items-center gap-2">
               <span className="text-xl font-semibold tracking-tight text-dark">
                 {resolveTplString(global.brandName, store)}
               </span>
             </Link>
 
-            <p className="mt-4 text-sm text-dark-3">
-              {resolveTplString(footer.description, store)}
-            </p>
+            <p className="mt-4 text-sm text-dark-3">{resolveTplString(footer.description, store)}</p>
 
             <ul className="mt-6 flex flex-col gap-3 text-sm text-dark-2">
-              {(Array.isArray(footer.contact) ? footer.contact : []).map(
-                (c) => {
-                  const text = resolveTplString(c.text, store);
-                  const href = c.href
-                    ? resolveTplString(c.href, store).trim()
-                    : "";
-                  return (
-                    <li key={`${c.icon ?? ""}-${text}`} className="flex gap-3">
-                      {c.icon ? (
-                        <i
-                          className={`bi ${c.icon} mt-[2px] leading-none text-[color:var(--brand-primary,#fe62b2)]`}
-                        />
-                      ) : null}
-                      {href ? (
-                        <a
-                          className="hover:underline"
-                          href={href}
-                          target={c.target}
-                          rel={c.rel}
-                        >
-                          {text}
-                        </a>
-                      ) : (
-                        <span>{text}</span>
-                      )}
-                    </li>
-                  );
-                },
-              )}
+              {(Array.isArray(footer.contact) ? footer.contact : []).map((c: any) => {
+                const text = resolveTplString(c.text, store);
+                const href = c.href ? resolveTplString(c.href, store).trim() : "";
+                return (
+                  <li key={`${c.icon ?? ""}-${text}`} className="flex gap-3">
+                    {c.icon ? (
+                      <i className={`bi ${c.icon} mt-[2px] leading-none text-[color:var(--brand-primary,#fe62b2)]`} />
+                    ) : null}
+                    {href ? (
+                      <a className="hover:underline" href={href} target={c.target} rel={c.rel}>
+                        {text}
+                      </a>
+                    ) : (
+                      <span>{text}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="mt-6 flex items-center gap-3">
-              {(Array.isArray(footer.socials) ? footer.socials : []).map(
-                (s) => {
-                  const href = resolveTplString(s.href, store).trim();
-                  return (
-                    <a
-                      key={s.label}
-                      href={href}
-                      target={s.target}
-                      rel={s.rel}
-                      className="inline-flex items-center justify-center rounded-full border border-gray-3 bg-gray-1 text-dark-2 h-10 w-10 transition hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:text-[color:var(--brand-primary,#fe62b2)] active:scale-[0.98]"
-                      aria-label={s.label}
-                    >
-                      {s.icon ? (
-                        <i
-                          className={`bi ${s.icon} text-[16px] leading-none`}
-                        />
-                      ) : null}
-                    </a>
-                  );
-                },
-              )}
+              {(Array.isArray(footer.socials) ? footer.socials : []).map((s: any) => {
+                const href = resolveTplString(s.href, store).trim();
+                return (
+                  <a
+                    key={s.label}
+                    href={href}
+                    target={s.target}
+                    rel={s.rel}
+                    className="inline-flex items-center justify-center rounded-full border border-gray-3 bg-gray-1 text-dark-2 h-10 w-10 transition hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:text-[color:var(--brand-primary,#fe62b2)] active:scale-[0.98]"
+                    aria-label={s.label}
+                  >
+                    {s.icon ? <i className={`bi ${s.icon} text-[16px] leading-none`} /> : null}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -141,11 +120,7 @@ const Footer = () => {
         <div className="mx-auto max-w-[1170px] px-4 py-5 sm:px-8 xl:px-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-dark-3">
-              {formatTemplate(
-                resolveTplString(footer.bottom?.copyright, store) ||
-                  "© {year}",
-                { year },
-              )}
+              {formatTemplate(resolveTplString(footer.bottom?.copyright, store) || "© {year}", { year })}
             </p>
           </div>
         </div>

@@ -6,9 +6,6 @@ export type {
   HeaderBlock,
   HeaderNavItem,
   HeroBlock,
-  HeroFeatureBlock,
-  HeroFeatureItem,
-  HeroSliderBlock,
   NewArrivalsBlock,
   Product,
   ProductsBlock,
@@ -24,9 +21,6 @@ import type {
   HeaderBlock,
   HeaderNavItem,
   HeroBlock,
-  HeroFeatureBlock,
-  HeroFeatureItem,
-  HeroSliderBlock,
   NewArrivalsBlock,
   Product,
   ProductsBlock,
@@ -34,7 +28,7 @@ import type {
   StoreDataRow,
 } from "./types";
 
-import { flatten2, hydrateHeroSlider } from "./types";
+import { flatten2 } from "./types";
 let rows: StoreRow[] = [];
 
 export const setStoreRows = (nextRows: StoreRow[]) => {
@@ -42,11 +36,14 @@ export const setStoreRows = (nextRows: StoreRow[]) => {
   initDeepCtx();
 };
 
-const pick = <T,>(value: T | null | undefined, fallback: T) => (value ?? fallback) as T;
+const pick = <T,>(value: T | null | undefined, fallback: T) =>
+  (value ?? fallback) as T;
 
-const sortByOrder = <T extends { order: number }>(xs: T[]) => xs.slice().sort((a, b) => a.order - b.order);
+const sortByOrder = <T extends { order: number }>(xs: T[]) =>
+  xs.slice().sort((a, b) => a.order - b.order);
 const byKey = (key: string) => (r: StoreRow) => r.key === key;
-const byComponent = (component: string) => (r: StoreRow) => r.component === component;
+const byComponent = (component: string) => (r: StoreRow) =>
+  r.component === component;
 
 const rowData = <T,>(r?: StoreRow) => (r?.data as T) ?? (undefined as any);
 
@@ -57,7 +54,8 @@ const lastOne = <T,>(key: string) => {
   return rowData<T>(xs.at(-1));
 };
 
-const many = <T,>(key: string) => sortByOrder(rows.filter(byKey(key))).map((r) => r.data as T);
+const many = <T,>(key: string) =>
+  sortByOrder(rows.filter(byKey(key))).map((r) => r.data as T);
 
 const materializeComponent = (component: string) => {
   const group = sortByOrder(rows.filter(byComponent(component)));
@@ -124,11 +122,13 @@ const resolveTemplates = <T,>(value: T): T => {
     }) as any;
   }
 
-  if (Array.isArray(value)) return value.map((v) => resolveTemplates(v as any)) as any;
+  if (Array.isArray(value))
+    return value.map((v) => resolveTemplates(v as any)) as any;
 
   if (typeof value === "object") {
     const out: any = {};
-    for (const [k, v] of Object.entries(value as any)) out[k] = resolveTemplates(v as any);
+    for (const [k, v] of Object.entries(value as any))
+      out[k] = resolveTemplates(v as any);
     return out;
   }
 
@@ -141,7 +141,10 @@ const normalizeNested = <T,>(x: any): T[][] => {
   return Array.isArray(x[0]) ? (x as T[][]) : ([x] as T[][]);
 };
 
-const listOrManyItems = <T extends { items?: any[] }>(lastKey: string, manyKey: string): T => {
+const listOrManyItems = <T extends { items?: any[] }>(
+  lastKey: string,
+  manyKey: string,
+): T => {
   const data = resolveTemplates(lastOne<T>(lastKey));
   const items = (data as any)?.items;
 
@@ -168,8 +171,14 @@ const initDeepCtx = () => {
   deepCtx.categories.items = flatten2<Category>(pick(categories?.items, []));
   deepCtx.products.items = flatten2<Product>(pick(products?.items, []));
 
-  if (!deepCtx.products.items.length) deepCtx.products.items = flatten2<Product>(resolveTemplates(many<any>("products.items")));
-  if (!deepCtx.categories.items.length) deepCtx.categories.items = flatten2<Category>(resolveTemplates(many<any>("categories.items")));
+  if (!deepCtx.products.items.length)
+    deepCtx.products.items = flatten2<Product>(
+      resolveTemplates(many<any>("products.items")),
+    );
+  if (!deepCtx.categories.items.length)
+    deepCtx.categories.items = flatten2<Category>(
+      resolveTemplates(many<any>("categories.items")),
+    );
 };
 
 initDeepCtx();
@@ -214,21 +223,13 @@ export const getHomeNewArrivals = (): NewArrivalsBlock => {
   });
 };
 
-export const getHeroSlider = (): HeroSliderBlock => {
-  const base = resolveTemplates(lastOne<HeroSliderBlock>("heroSlider")) ?? ({ swiper: {}, slides: [] } as any);
-  const products = getProducts();
-  return hydrateHeroSlider(base, products);
-};
-
-export const getHeroFeature = (): HeroFeatureBlock => {
-  const base = resolveTemplates(lastOne<any>("heroFeature")) ?? {};
-  const items = Array.isArray(base?.items) ? (base.items as HeroFeatureItem[]) : [];
-  return { items } satisfies HeroFeatureBlock;
-};
-
-export const getHero = (): HeroBlock => {
-  const base = resolveTemplates(lastOne<HeroBlock>("hero"));
-  return pick(base, { sectionBg: undefined, left: undefined, rightCards: [] } satisfies HeroBlock);
+export const getHero = (): HeroBlock["data"] => {
+  const row = resolveTemplates(lastOne<HeroBlock>("hero"));
+  return pick((row as any)?.data, {
+    heroCarrousel: [],
+    heroCards: [],
+    heroFeature: [],
+  } satisfies HeroBlock["data"]);
 };
 
 export const getHeader = (): HeaderBlock => {
@@ -287,8 +288,6 @@ export const getAnyBlock = <T = unknown>(key: string) => {
   if (key === "categories") return getCategories() as unknown as T;
   if (key === "products") return getProducts() as unknown as T;
   if (key === "home") return ({ newArrivals: getHomeNewArrivals() } as any) as T;
-  if (key === "heroSlider") return getHeroSlider() as unknown as T;
-  if (key === "heroFeature") return getHeroFeature() as unknown as T;
   if (key === "hero") return getHero() as unknown as T;
   if (key === "header") return getHeader() as unknown as T;
   return resolveTemplates(materializeComponent(key)) as T;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSelector } from "react-redux";
@@ -9,9 +9,8 @@ import Dropdown from "./Dropdown";
 import { useAppSelector } from "@/redux/store";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
-import { useStoreData } from "@/app/(site)/StoreDataProvider";
+import { useStore } from "@/app/(site)/StoreDataProvider";
 import AccountAuthModal from "./AccountAuthModal";
-
 import { useAuth } from "@/app/context/AuthContext";
 
 const getByPath = (obj: any, path: string) => {
@@ -43,11 +42,7 @@ const resolveTplString = (value: any, root: any) => {
 };
 
 const flatten2 = <T,>(x: any): T[] =>
-  Array.isArray(x)
-    ? x.flatMap((v) => flatten2<T>(v))
-    : x != null
-      ? [x as T]
-      : [];
+  Array.isArray(x) ? x.flatMap((v) => flatten2<T>(v)) : x != null ? [x as T] : [];
 const uniqBy = <T, K extends string | number>(arr: T[], key: (t: T) => K) => {
   const s = new Set<K>();
   return arr.filter((x) => {
@@ -77,21 +72,12 @@ const IconBtn = ({
     "group flex items-center justify-center w-10 h-10 rounded-full border border-gray-3 bg-gray-1 text-[color:var(--brand-primary,#fe62b2)] ease-in duration-200 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 active:scale-[0.98]";
   if (as === "link" && href)
     return (
-      <Link
-        href={href}
-        aria-label={ariaLabel}
-        className={`${base} ${className}`}
-      >
+      <Link href={href} aria-label={ariaLabel} className={`${base} ${className}`}>
         {children}
       </Link>
     );
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={`${base} ${className}`}
-    >
+    <button type="button" onClick={onClick} aria-label={ariaLabel} className={`${base} ${className}`}>
       {children}
     </button>
   );
@@ -114,7 +100,7 @@ const SearchBar = ({
   withClose?: boolean;
   ariaClose?: string;
 }) => {
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <div className="max-w-[475px] w-full mx-auto">
@@ -122,16 +108,12 @@ const SearchBar = ({
         action="/shop-whith-sidebar"
         role="search"
         aria-label="Buscar productos"
-        onSubmit={(e) => {
+        onSubmit={() => {
           const q = query.trim();
           if (!q) return;
 
-          const event_source_url =
-            typeof window !== "undefined" ? window.location.href : undefined;
-          const event_id = (
-            globalThis.crypto?.randomUUID?.() ??
-            `${Date.now()}-${Math.random()}`
-          ).toString();
+          const event_source_url = typeof window !== "undefined" ? window.location.href : undefined;
+          const event_id = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).toString();
 
           fetch("/api/meta/capi", {
             method: "POST",
@@ -141,19 +123,12 @@ const SearchBar = ({
               event_id,
               event_source_url,
               custom_data: { search_string: q },
-              ...(isAuthenticated && user?.email
-                ? { user: { email: user.email } }
-                : {}),
+              ...(isAuthenticated && user?.email ? { user: { email: user.email } } : {}),
             }),
             keepalive: true,
           }).catch(() => {});
 
-          window.fbq?.(
-            "track",
-            "Search",
-            { search_string: q },
-            { eventID: event_id },
-          );
+          window.fbq?.("track", "Search", { search_string: q }, { eventID: event_id });
         }}
       >
         <div className="flex items-center">
@@ -196,17 +171,36 @@ const SearchBar = ({
 };
 
 const Header = () => {
-  const store = useStoreData();
-  const { header, global, products, categories } = store;
+  const store = useStore();
+  const header = store.get<any>("header", {});
+  const global = store.get<any>("global", {});
+  const products = store.get<any>("products", { items: [] });
+  const categories = store.get<any>("categories", { items: [] });
 
-  useEffect(() => {
-    console.log("[Header] store data:", {
-      header,
+  const tplRoot = useMemo(
+    () => ({
       global,
+      header,
       products,
       categories,
+      get: store.get,
+      has: store.has,
+      rows: store.rows,
+    }),
+    [global, header, products, categories, store.get, store.has, store.rows],
+  );
+
+  useEffect(() => {
+    console.log("[Header] global:", global);
+    console.log("[Header] header:", header);
+    console.log("[Header] categories:", categories);
+    console.log("[Header] tplRoot check:", {
+      shop: getByPath(tplRoot, "global.store.routes.shop"),
+      catKey: getByPath(tplRoot, "global.store.routes.categoryQueryKey"),
+      cats: getByPath(tplRoot, "categories.items")?.length,
+      colors: getByPath(tplRoot, "global.colors"),
     });
-  }, [store, header, global, products, categories]);
+  }, [global, header, categories, tplRoot]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -223,50 +217,10 @@ const Header = () => {
     return () => window.removeEventListener("scroll", onScroll as any);
   }, []);
 
-  useEffect(() => {
-    const src = resolveTplValue<any>(header.search?.categoriesSource, store);
-    const raw = {
-      headerMenu: header.menu,
-      headerItem0: Array.isArray(header.menu) ? header.menu[0] : undefined,
-      categoriesSourceRaw: header.search?.categoriesSource,
-      categoriesSourceResolved: src,
-      resolvedIsArray: Array.isArray(src),
-      resolvedLen: Array.isArray(src) ? src.length : 0,
-      categoriesBlock: categories,
-      categoriesItems: categories?.items,
-      categoriesItemsIsArray: Array.isArray(categories?.items),
-      categoriesItemsShape: Array.isArray(categories?.items)
-        ? categories.items.map((r: any) =>
-            Array.isArray(r) ? r.length : typeof r,
-          )
-        : null,
-      sampleFirstRow: Array.isArray(categories?.items)
-        ? categories.items?.[0]
-        : undefined,
-      sampleFirstCategory: Array.isArray(categories?.items?.[0])
-        ? categories.items?.[0]?.[0]
-        : undefined,
-      sampleFirstSub: Array.isArray(categories?.items?.[0]?.[0]?.sub)
-        ? categories.items?.[0]?.[0]?.sub
-        : undefined,
-      productsItemsShape: Array.isArray(products?.items)
-        ? products.items.map((r: any) =>
-            Array.isArray(r) ? r.length : typeof r,
-          )
-        : null,
-    };
-  }, [
-    store,
-    header.menu,
-    header.search?.categoriesSource,
-    categories,
-    products,
-  ]);
-
   const resolvedUiColors = useMemo(() => {
-    const v = resolveTplValue<any>(header.ui?.colors, store);
+    const v = resolveTplValue<any>(header.ui?.colors, tplRoot);
     return typeof v === "object" && v ? v : undefined;
-  }, [header.ui?.colors, store]);
+  }, [header.ui?.colors, tplRoot]);
 
   const primary = useMemo(
     () => resolvedUiColors?.primary ?? global.colors?.primary ?? "#fe62b2",
@@ -283,14 +237,11 @@ const Header = () => {
     const labelKey = cfg?.labelKey ?? "label";
     const valueKey = cfg?.valueKey ?? "slug";
 
-    const src = resolveTplValue<any>(header.search?.categoriesSource, store);
+    const src = resolveTplValue<any>(header.search?.categoriesSource, tplRoot);
     const items = Array.isArray(src) ? src : [];
 
     const onlyTop = items
-      .map((it: any) => ({
-        label: it?.[labelKey],
-        value: it?.[valueKey],
-      }))
+      .map((it: any) => ({ label: it?.[labelKey], value: it?.[valueKey] }))
       .map((o: any) => ({
         label: typeof o?.label === "string" ? o.label.trim() : "",
         value: o?.value,
@@ -300,19 +251,16 @@ const Header = () => {
     const out = uniqBy(onlyTop, (o) => `${o.label}::${String(o.value)}`);
 
     if (cfg?.includeAll)
-      return [
-        { label: cfg.allLabel ?? "Todas", value: cfg.allValue ?? "all" },
-        ...out,
-      ];
+      return [{ label: cfg.allLabel ?? "Todas", value: cfg.allValue ?? "all" }, ...out];
 
     return out;
-  }, [header.search?.categoriesSource, header.search?.categoriesConfig, store]);
+  }, [header.search?.categoriesSource, header.search?.categoriesConfig, tplRoot]);
 
   const menuResolved = useMemo(() => {
     const menu = Array.isArray(header.menu) ? header.menu : [];
     return menu.flatMap((mi: any) => {
       const title = mi.title;
-      const path = resolveTplString(mi.path, store);
+      const path = resolveTplString(mi.path, tplRoot);
 
       if (mi.submenu && Array.isArray(mi.submenu)) {
         return [
@@ -323,7 +271,7 @@ const Header = () => {
             submenu: mi.submenu
               .map((s: any) => ({
                 title: String(s.title ?? "").trim(),
-                path: resolveTplString(s.path, store),
+                path: resolveTplString(s.path, tplRoot),
               }))
               .filter((s: any) => s.title && s.path),
           },
@@ -331,27 +279,22 @@ const Header = () => {
       }
 
       if (mi.submenuSource && mi.submenuConfig) {
-        const src = resolveTplValue<any>(mi.submenuSource, store);
+        const src = resolveTplValue<any>(mi.submenuSource, tplRoot);
         const items = flatten2<any>(src);
         const cfg = mi.submenuConfig;
-        const tpl = resolveTplString(cfg.pathTemplate, store);
-        const mkPath = (value: any) =>
-          tpl.replaceAll("{value}", encodeURIComponent(String(value)));
+        const tpl = resolveTplString(cfg.pathTemplate, tplRoot);
+        const mkPath = (value: any) => tpl.replaceAll("{value}", encodeURIComponent(String(value)));
 
         return items
           .map((cat: any) => {
-            const catLabel = String(
-              cat?.[cfg.labelKey] ?? cat?.title ?? "",
-            ).trim();
+            const catLabel = String(cat?.[cfg.labelKey] ?? cat?.title ?? "").trim();
             const catValue = cat?.[cfg.valueKey] ?? cat?.slug ?? cat?.id;
             if (!catLabel || catValue == null) return null;
 
             const subs = Array.isArray(cat?.sub) ? cat.sub : [];
             const submenu = subs
               .map((sub: any) => {
-                const subLabel = String(
-                  sub?.[cfg.labelKey] ?? sub?.title ?? "",
-                ).trim();
+                const subLabel = String(sub?.[cfg.labelKey] ?? sub?.title ?? "").trim();
                 const subValue = sub?.[cfg.valueKey] ?? sub?.slug ?? sub?.id;
                 if (!subLabel || subValue == null) return null;
                 return { title: subLabel, path: mkPath(subValue) };
@@ -371,21 +314,19 @@ const Header = () => {
 
       return [{ ...mi, title, path }];
     });
-  }, [header.menu, store]);
+  }, [header.menu, tplRoot]);
 
   const supportKicker = useMemo(
-    () =>
-      header.support ? resolveTplString(header.support.kicker, store) : "",
-    [header.support, store],
+    () => (header.support ? resolveTplString(header.support.kicker, tplRoot) : ""),
+    [header.support, tplRoot],
   );
   const supportValue = useMemo(
-    () => (header.support ? resolveTplString(header.support.value, store) : ""),
-    [header.support, store],
+    () => (header.support ? resolveTplString(header.support.value, tplRoot) : ""),
+    [header.support, tplRoot],
   );
   const supportIcon = useMemo(
-    () =>
-      header.support?.icon ? resolveTplString(header.support.icon, store) : "",
-    [header.support?.icon, store],
+    () => (header.support?.icon ? resolveTplString(header.support.icon, tplRoot) : ""),
+    [header.support?.icon, tplRoot],
   );
 
   const topPad = stickyMenu ? "py-4" : "py-6";
@@ -408,20 +349,15 @@ const Header = () => {
     >
       <div className="max-w-[1170px] mx-auto px-4 sm:px-7.5 xl:px-0">
         <div className={`ease-out duration-200 ${topPad}`}>
-          <input
-            id="mobile-search-toggle"
-            type="checkbox"
-            className="peer sr-only"
-            defaultChecked
-          />
+          <input id="mobile-search-toggle" type="checkbox" className="peer sr-only" />
 
           <div className="grid grid-cols-3 items-center gap-4 lg:flex lg:flex-row lg:gap-5 lg:items-center xl:justify-between">
             <div className="col-span-1 flex items-center gap-4 lg:col-auto lg:order-1 lg:w-auto">
               <div className="flex items-center gap-3">
                 <AccountAuthModal
-                  kicker={resolveTplString(header.links.account.kicker, store)}
-                  label={resolveTplString(header.links.account.label, store)}
-                  icon={header.links.account.icon ?? "bi-person"}
+                  kicker={resolveTplString(header.links?.account?.kicker, tplRoot)}
+                  label={resolveTplString(header.links?.account?.label, tplRoot)}
+                  icon={header.links?.account?.icon ?? "bi-person"}
                 />
 
                 <button
@@ -438,18 +374,14 @@ const Header = () => {
                   </span>
 
                   <div className="hidden lg:block leading-tight">
-                    <span className="block text-2xs text-dark-4 uppercase">
-                      carrito
-                    </span>
-                    <p className="font-medium text-custom-sm text-dark">
-                      ${totalPrice}
-                    </p>
+                    <span className="block text-2xs text-dark-4 uppercase">carrito</span>
+                    <p className="font-medium text-custom-sm text-dark">${totalPrice}</p>
                   </div>
                 </button>
 
                 <label
                   htmlFor="mobile-search-toggle"
-                  aria-label={resolveTplString(header.search.ariaOpen, store)}
+                  aria-label={resolveTplString(header.search?.ariaOpen, tplRoot)}
                   className="hidden lg:inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-3 bg-gray-1 text-[color:var(--brand-primary,#fe62b2)] ease-in duration-200 hover:border-[color:var(--brand-primary,#fe62b2)]/40 hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 cursor-pointer active:scale-[0.98]"
                 >
                   <i className="bi bi-search text-[18px] leading-none" />
@@ -458,18 +390,14 @@ const Header = () => {
             </div>
 
             <div className="col-span-1 flex justify-center lg:order-2 lg:flex-1">
-              <Link
-                className="flex-shrink-0 flex justify-center w-full"
-                href={logoHref}
-                aria-label="Ir al inicio"
-              >
+              <Link className="flex-shrink-0 flex justify-center w-full" href={logoHref} aria-label="Ir al inicio">
                 {logoSrc ? (
                   <Image
                     src={logoSrc}
-                    alt={header.logo.alt}
-                    width={header.logo.width}
-                    height={header.logo.height}
-                    className={header.logo.className ?? ""}
+                    alt={header.logo?.alt ?? ""}
+                    width={header.logo?.width ?? 0}
+                    height={header.logo?.height ?? 0}
+                    className={header.logo?.className ?? ""}
                     priority
                   />
                 ) : null}
@@ -479,16 +407,10 @@ const Header = () => {
             <div className="col-span-1 flex justify-end items-center gap-7.5 lg:col-auto lg:order-3">
               {header.support ? (
                 <div className="hidden xl:flex items-center gap-3.5">
-                  <i
-                    className={`bi ${supportIcon || "bi-headset"} text-[24px] text-[color:var(--brand-primary,#fe62b2)]`}
-                  />
+                  <i className={`bi ${supportIcon || "bi-headset"} text-[24px] text-[color:var(--brand-primary,#fe62b2)]`} />
                   <div>
-                    <span className="block text-2xs text-dark-4 uppercase">
-                      {supportKicker}
-                    </span>
-                    <p className="font-medium text-custom-sm text-dark">
-                      {supportValue}
-                    </p>
+                    <span className="block text-2xs text-dark-4 uppercase">{supportKicker}</span>
+                    <p className="font-medium text-custom-sm text-dark">{supportValue}</p>
                   </div>
                 </div>
               ) : null}
@@ -501,18 +423,10 @@ const Header = () => {
                     <li>
                       <IconBtn
                         as="link"
-                        href={resolveTplString(
-                          header.actions.recent.href,
-                          store,
-                        )}
-                        ariaLabel={resolveTplString(
-                          header.actions.recent.ariaLabel,
-                          store,
-                        )}
+                        href={resolveTplString(header.actions.recent.href, tplRoot)}
+                        ariaLabel={resolveTplString(header.actions.recent.ariaLabel, tplRoot)}
                       >
-                        <i
-                          className={`bi ${header.actions.recent.icon ?? "bi-clock-history"} text-[18px] leading-none`}
-                        />
+                        <i className={`bi ${header.actions.recent.icon ?? "bi-clock-history"} text-[18px] leading-none`} />
                       </IconBtn>
                     </li>
                   ) : null}
@@ -520,15 +434,10 @@ const Header = () => {
                   <li>
                     <IconBtn
                       as="link"
-                      href={resolveTplString(header.links.wishlist.href, store)}
-                      ariaLabel={resolveTplString(
-                        header.links.wishlist.ariaLabel,
-                        store,
-                      )}
+                      href={resolveTplString(header.links?.wishlist?.href, tplRoot)}
+                      ariaLabel={resolveTplString(header.links?.wishlist?.ariaLabel, tplRoot)}
                     >
-                      <i
-                        className={`bi ${header.links.wishlist.icon ?? "bi-heart"} text-[18px] leading-none`}
-                      />
+                      <i className={`bi ${header.links?.wishlist?.icon ?? "bi-heart"} text-[18px] leading-none`} />
                     </IconBtn>
                   </li>
                 </ul>
@@ -582,19 +491,19 @@ const Header = () => {
           <div className="block w-full pt-4 lg:pt-5 lg:hidden">
             <SearchBar
               categories={categoriesOptions}
-              placeholder={resolveTplString(header.search.placeholder, store)}
-              ariaSubmit={resolveTplString(header.search.ariaSubmit, store)}
+              placeholder={resolveTplString(header.search?.placeholder, tplRoot)}
+              ariaSubmit={resolveTplString(header.search?.ariaSubmit, tplRoot)}
               query={searchQuery}
               setQuery={setSearchQuery}
             />
           </div>
 
-          <div className="hidden w-full pt-4 lg:pt-5 lg:hidden lg:peer-checked:block">
+          <div className="hidden w-full pt-4 lg:pt-5 lg:peer-checked:block">
             <SearchBar
               categories={categoriesOptions}
-              placeholder={resolveTplString(header.search.placeholder, store)}
-              ariaSubmit={resolveTplString(header.search.ariaSubmit, store)}
-              ariaClose={resolveTplString(header.search.ariaClose, store)}
+              placeholder={resolveTplString(header.search?.placeholder, tplRoot)}
+              ariaSubmit={resolveTplString(header.search?.ariaSubmit, tplRoot)}
+              ariaClose={resolveTplString(header.search?.ariaClose, tplRoot)}
               withClose
               query={searchQuery}
               setQuery={setSearchQuery}
@@ -610,16 +519,14 @@ const Header = () => {
               <nav className="overflow-visible">
                 <ul className="flex xl:items-center flex-col xl:flex-row gap-5 xl:gap-6 overflow-visible">
                   {menuResolved.map((menuItem: any, i: number) =>
-                    menuItem.submenu &&
-                    Array.isArray(menuItem.submenu) &&
-                    menuItem.submenu.length ? (
+                    menuItem.submenu && Array.isArray(menuItem.submenu) && menuItem.submenu.length ? (
                       <li
                         key={i}
                         className="group relative overflow-visible before:w-0 before:h-[3px] before:bg-[color:var(--brand-primary,#fe62b2)] before:absolute before:left-0 before:top-0 before:rounded-b-[3px] before:ease-out before:duration-200 hover:before:w-full"
                       >
                         <button
                           type="button"
-                          className={`hover:text-[color:var(--brand-primary,#fe62b2)] text-custom-sm font-medium text-dark flex items-center gap-1 ${navPad}`}
+                          className="hover:text-[color:var(--brand-primary,#fe62b2)] text-sm font-medium text-dark flex items-center gap-1 xl:py-6"
                           aria-haspopup="menu"
                         >
                           {menuItem.title}
@@ -630,18 +537,16 @@ const Header = () => {
                           <div className="relative pt-3">
                             <span className="absolute top-0 left-5 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[8px] border-b-white drop-shadow-[0_-1px_0_rgba(0,0,0,0.10)]" />
                             <div className="bg-white border border-gray-3 rounded-2xl shadow-xl min-w-[260px] py-2 overflow-hidden">
-                              {menuItem.submenu.map(
-                                (subItem: any, j: number) => (
-                                  <Link
-                                    key={j}
-                                    href={subItem.path}
-                                    className="group flex items-center justify-between gap-4 px-4 py-2.5 text-sm text-[color:var(--brand-primary,#fe62b2)] transition hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 hover:text-[color:var(--brand-primary,#fe62b2)]"
-                                  >
-                                    <span>{subItem.title}</span>
-                                    <i className="bi bi-arrow-right text-[14px] leading-none opacity-60 transition-transform duration-150 group-hover:translate-x-0.5" />
-                                  </Link>
-                                ),
-                              )}
+                              {menuItem.submenu.map((subItem: any, j: number) => (
+                                <Link
+                                  key={j}
+                                  href={subItem.path}
+                                  className="group flex items-center justify-between gap-4 px-4 py-2.5 text-sm text-[color:var(--brand-primary,#fe62b2)] transition hover:bg-[color:var(--brand-secondary,#ffaed7)]/25 hover:text-[color:var(--brand-primary,#fe62b2)]"
+                                >
+                                  <span>{subItem.title}</span>
+                                  <i className="bi bi-arrow-right text-[14px] leading-none opacity-60 transition-transform duration-150 group-hover:translate-x-0.5" />
+                                </Link>
+                              ))}
                             </div>
                           </div>
                         </div>
@@ -653,7 +558,7 @@ const Header = () => {
                       >
                         <Link
                           href={menuItem.path}
-                          className={`hover:text-[color:var(--brand-primary,#fe62b2)] text-custom-sm font-medium text-dark flex ${navPad}`}
+                          className={`hover:text-[color:var(--brand-primary,#fe62b2)] text-sm font-medium text-dark flex ${navPad}`}
                         >
                           {menuItem.title}
                         </Link>
@@ -692,14 +597,8 @@ const Header = () => {
                   <nav>
                     <ul className="flex flex-col">
                       {menuResolved.map((menuItem: any, i: number) =>
-                        menuItem.submenu &&
-                        Array.isArray(menuItem.submenu) &&
-                        menuItem.submenu.length ? (
-                          <Dropdown
-                            key={i}
-                            menuItem={menuItem}
-                            stickyMenu={stickyMenu}
-                          />
+                        menuItem.submenu && Array.isArray(menuItem.submenu) && menuItem.submenu.length ? (
+                          <Dropdown key={i} menuItem={menuItem} stickyMenu={stickyMenu} />
                         ) : (
                           <li key={i} className="border-b border-gray-2/60">
                             <Link

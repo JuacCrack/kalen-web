@@ -3,10 +3,13 @@
 import React, { useEffect, useMemo } from "react";
 import Link from "next/link";
 import ProductItem from "@/components/Common/ProductItem";
-import { useStoreData } from "@/app/(site)/StoreDataProvider";
-import type { Product } from "@/data/types";
-import { flatten2 } from "@/data/types";
+import { useStore } from "@/app/(site)/StoreDataProvider";
 import { Swiper, SwiperSlide } from "swiper/react";
+
+type Product = any;
+
+const flatten2 = <T,>(x: any): T[] =>
+  Array.isArray(x) ? x.flatMap((v) => flatten2<T>(v)) : x != null ? [x as T] : [];
 
 const getByPath = (obj: any, path: string) => {
   if (!obj || !path) return undefined;
@@ -62,14 +65,23 @@ const useIsSm = () => {
 };
 
 const NewArrival = () => {
-  const store = useStoreData();
-  const { home, products: productsBlock, header, global } = store;
+  const store = useStore();
+  const homeRow = store.get<any>("home", {});
+  const productsRow = store.get<any>("products", { items: [] });
+  const headerRow = store.get<any>("header", {});
+  const globalRow = store.get<any>("global", {});
+  const home = homeRow?.data ?? homeRow;
+  const productsBlock = productsRow?.data ?? productsRow;
+  const header = headerRow?.data ?? headerRow;
+  const global = globalRow?.data ?? globalRow;
 
   const cfgRaw = home?.newArrivals ?? { kicker: "", title: "", viewAll: { label: "", href: "" }, productIds: [] };
 
   const cfg = useMemo(() => {
     const productIds = resolveTplValue<any>((cfgRaw as any).productIds, store);
-    const ids = Array.isArray(productIds) ? productIds.map((x) => Number(x)).filter((x) => Number.isFinite(x)) : [];
+    const ids = Array.isArray(productIds)
+      ? productIds.map((x) => Number(x)).filter((x) => Number.isFinite(x))
+      : [];
     return {
       kicker: resolveTplString((cfgRaw as any).kicker, store),
       title: resolveTplString((cfgRaw as any).title, store),
@@ -119,11 +131,16 @@ const NewArrival = () => {
         <div className="mb-7 sm:mb-9 flex flex-col gap-4 sm:gap-5 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/85 px-3 py-1 text-xs sm:text-sm font-semibold text-slate-900 shadow-sm backdrop-blur">
-              <i className="bi bi-stars text-[15px] sm:text-[16px] leading-none text-[color:var(--brand-primary,#fe62b2)]" aria-hidden="true" />
+              <i
+                className="bi bi-stars text-[15px] sm:text-[16px] leading-none text-[color:var(--brand-primary,#fe62b2)]"
+                aria-hidden="true"
+              />
               <span className="leading-none">{kicker}</span>
             </span>
 
-            <h2 className="mt-3 text-balance font-semibold text-[22px] leading-tight sm:text-3xl lg:text-[34px] text-slate-900">{title}</h2>
+            <h2 className="mt-3 text-balance font-semibold text-[22px] leading-tight sm:text-3xl lg:text-[34px] text-slate-900">
+              {title}
+            </h2>
 
             <div className="mt-3 h-1 w-20 sm:w-24 rounded-full bg-gradient-to-r from-[color:var(--brand-primary,#fe62b2)] to-[color:var(--brand-secondary,#ffaed7)]" />
           </div>
@@ -144,7 +161,7 @@ const NewArrival = () => {
         ) : isSm ? (
           <div className="-mx-4 px-4">
             <Swiper slidesPerView={1.25} spaceBetween={12}>
-              {products.map((item) => (
+              {products.map((item: any) => (
                 <SwiperSlide key={item.id}>
                   <ProductItem item={item as any} />
                 </SwiperSlide>
@@ -153,7 +170,7 @@ const NewArrival = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 lg:gap-x-7.5 gap-y-8 lg:gap-y-9">
-            {products.map((item) => (
+            {products.map((item: any) => (
               <div key={item.id} className="h-full">
                 <ProductItem item={item as any} />
               </div>
